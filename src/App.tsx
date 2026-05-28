@@ -273,16 +273,11 @@ export default function App() {
       <div className="noise-overlay" />
 
       {/* ── NAVBAR ────────────────────────────────────────────────────── */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'nav-blur py-3' : 'py-5'}`}>
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'nav-blur py-3' : 'py-4'}`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <button onClick={() => scrollTo('home')} className="flex items-center gap-3 group">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-700 to-teal-400 flex items-center justify-center shadow-lg shadow-teal-900/50">
-                <Music size={20} className="text-white" />
-              </div>
-              <div className="absolute inset-0 rounded-lg bg-teal-400/20 blur-md group-hover:blur-xl transition-all duration-300" />
-            </div>
-            <span className="font-black text-lg tracking-wider uppercase" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          <button onClick={() => scrollTo('home')} className="flex items-center gap-2 group">
+            <img src="/logo.png" alt="Wide Spectrum" className={`transition-all duration-300 ${scrolled ? 'h-8' : 'h-10'}`} />
+            <span className="font-black tracking-wider uppercase hidden sm:inline" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: scrolled ? '0.85rem' : '1rem' }}>
               <span className="gradient-text">Wide</span>
               <span className="text-white">Spectrum</span>
             </span>
@@ -490,8 +485,19 @@ export default function App() {
             </div>
           </div>
 
-          {/* Right */}
-          <div className="reveal-right space-y-4">
+          {/* Right - Images */}
+          <div className="reveal-right">
+            <div className="grid grid-cols-1 gap-4 mb-6">
+              <div className="glass-card rounded-xl overflow-hidden border-0">
+                <img src="/BJ.jpeg" alt="Studio - Benny John" className="w-full h-auto object-cover rounded-lg hover:scale-105 transition-transform duration-300" />
+              </div>
+              <div className="glass-card rounded-xl overflow-hidden border-0">
+                <img src="/BJ2.jpeg" alt="Live Performance" className="w-full h-auto object-cover rounded-lg hover:scale-105 transition-transform duration-300" />
+              </div>
+            </div>
+
+            {/* Features below images */}
+            <div className="space-y-4">
             {[
               { title: 'World-Class Sound', desc: 'We deliver globally competitive production quality trusted by artists and brands', icon: Headphones },
               { title: 'End-to-End Ecosystem', desc: 'From idea to final master, everything happens seamlessly under one roof.', icon: Trophy },
@@ -507,8 +513,9 @@ export default function App() {
                 </div>
               </div>
             ))}
+            </div>
 
-            <div className="glass-card p-5 rounded-xl">
+            <div className="glass-card p-5 rounded-xl mt-4">
               <p className="text-xs text-teal-400/50 uppercase tracking-widest mb-3">Collaborated With</p>
               <div className="flex flex-wrap gap-2">
                 {['Arijit Singh', 'Tanishk Bagchi', 'Dhvani Bhanushali', 'Nora Fatehi', 'Jubin Nautiyal', 'Sunny M.R.', 'Hardik Pandya'].map(name => (
@@ -755,14 +762,11 @@ export default function App() {
       <footer className="py-12 px-6 border-t border-teal-900/30">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-700 to-teal-400 flex items-center justify-center">
-                <Music size={16} className="text-white" />
-              </div>
-              <span className="font-black text-base tracking-wider uppercase" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            <div className="flex items-center gap-2">
+              <img src="/logo.png" alt="Wide Spectrum" className="h-8" />
+              <span className="font-black text-sm tracking-wider uppercase" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                 <span className="gradient-text">Wide</span>
                 <span className="text-white">Spectrum</span>
-                <span className="text-teal-400/50 text-sm font-medium"> Productions</span>
               </span>
             </div>
 
