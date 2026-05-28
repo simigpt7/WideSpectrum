@@ -275,12 +275,10 @@ export default function App() {
       {/* ── NAVBAR ────────────────────────────────────────────────────── */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'nav-blur py-3' : 'py-4'}`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <button onClick={() => scrollTo('home')} className="flex items-center gap-2 group">
+          <button onClick={() => scrollTo('home')} className="flex items-center gap-3 group">
+            <WaveEQ bars={4} />
             <img src="/logo.png" alt="Wide Spectrum" className={`transition-all duration-300 ${scrolled ? 'h-8' : 'h-10'}`} />
-            <span className="font-black tracking-wider uppercase hidden sm:inline" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: scrolled ? '0.85rem' : '1rem' }}>
-              <span className="gradient-text">Wide</span>
-              <span className="text-white">Spectrum</span>
-            </span>
+            <WaveEQ bars={4} />
           </button>
 
           {/* Desktop nav */}
@@ -332,22 +330,8 @@ export default function App() {
       <section id="home" className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
         <HeroCanvas />
         <div className="hero-scanline" />
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full opacity-15"
-          style={{ background: 'radial-gradient(circle, #1F8A8A, transparent)', filter: 'blur(60px)' }} />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full opacity-15"
-          style={{ background: 'radial-gradient(circle, #3ED6A0, transparent)', filter: 'blur(60px)' }} />
-        <div className="absolute inset-0 opacity-5"
-          style={{ backgroundImage: 'linear-gradient(rgba(31,138,138,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(31,138,138,0.4) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
 
         <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
-          <div className="animate-fade-up mb-6" style={{ animationDelay: '0.2s' }}>
-            <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full border border-teal-800/60 bg-teal-950/40">
-              <WaveEQ bars={5} />
-              <span className="text-xs font-semibold tracking-[0.2em] text-teal-400 uppercase">Mumbai, India</span>
-              <WaveEQ bars={5} />
-            </div>
-          </div>
-
           <h1 className="mb-4" style={{ fontFamily: 'Montserrat, sans-serif', perspective: '800px' }}>
             <span className="block text-[clamp(2.2rem,7vw,5.5rem)] font-black leading-none tracking-tighter text-white mb-2">
               <AnimLetters text="Build Your Sound" baseDelay={0.4} />
