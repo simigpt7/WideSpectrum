@@ -346,36 +346,54 @@ export default function App() {
       </nav>
 
       {/* ── HERO ──────────────────────────────────────────────────────── */}
-      <section id="home" className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800">
-        <HeroCanvas />
-        <div className="hero-scanline" />
+      <section id="home" className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden" style={{ background: '#030A0E' }}>
+		  {/* Bhaswati change code */}
+        {/* Video background layer — 30% opacity */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ opacity: 0.6, zIndex: 1 }}
+        >
+          <source src="/hero-video.mp4" type="video/mp4" />
+        </video>
+		{/* Bhaswati change code */}
+        {/* Dark overlay on top of video for contrast */}
+        <div className="absolute inset-0" style={{ background: 'rgba(3,10,14,0.6)', zIndex: 2 }} />
 
-        <div className="relative z-20 text-center px-6 max-w-5xl mx-auto">
-          <h1 className="mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-            <span className="block text-[clamp(2.2rem,7vw,5.5rem)] font-black leading-none tracking-tighter text-white mb-2">
+        {/* 3D particle canvas — sits above video */}
+        <HeroCanvas />
+        <div className="hero-scanline" style={{ zIndex: 4 }} />
+		{/* Bhaswati change code */}
+        {/* Content — highest z-index */}
+        <div className="relative z-20 text-center px-6 max-w-5xl mx-auto w-full flex flex-col items-center translate-y-10" style={{ zIndex: 10 }}>
+          <h1 className="mb-4 text-center w-full" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            <span className="block text-[clamp(2.2rem,7vw,5.5rem)] font-black leading-none tracking-tighter text-white mb-2 text-center">
               <AnimLetters text="Build Your Sound" baseDelay={0.4} />
             </span>
-            <span className="block text-[clamp(2.2rem,7vw,5.5rem)] font-black leading-none tracking-tighter text-teal-300 mb-2" style={{ animation: 'none' }}>
+            <span className="block text-[clamp(2.2rem,7vw,5.5rem)] font-black leading-none tracking-tighter text-teal-300 mb-2 text-center" style={{ animation: 'none' }}>
               <AnimLetters text="Across the Spectrum" baseDelay={0.9} />
             </span>
           </h1>
 
-          <p className="animate-fade-up text-lg md:text-xl text-teal-200/60 max-w-2xl mx-auto mb-10 font-light leading-relaxed"
+          <p className="animate-fade-up text-lg md:text-xl text-teal-200/70 max-w-2xl mx-auto mb-10 font-light leading-relaxed text-center"
             style={{ animationDelay: '1.6s' }}>
             Premium music production, mixing, mastering, and live band design —
             trusted by artists and brands worldwide.
           </p>
 
-          <div className="animate-fade-up flex flex-col sm:flex-row gap-4 justify-center mb-16"
+          <div className="animate-fade-up flex flex-col sm:flex-row gap-4 justify-center mb-16 w-full"
             style={{ animationDelay: '1.8s' }}>
             <button onClick={() => scrollTo('contact')}
-              className="btn-primary px-8 py-4 rounded-full text-base font-bold text-white flex items-center gap-2 justify-center">
+              className="btn-primary px-8 py-4 rounded-full text-base font-bold text-white flex items-center gap-2 justify-center mx-auto sm:mx-0">
               <span>Book a Free Consultation</span>
               <ArrowRight size={16} />
             </button>
           </div>
 
-          <div className="animate-fade-up grid grid-cols-3 gap-6 max-w-lg mx-auto"
+          <div className="animate-fade-up grid grid-cols-3 gap-6 max-w-lg mx-auto w-full"
             style={{ animationDelay: '2s' }}>
             {[['300+', 'Projects Completed'], ['10+', 'Years Experience'], ['7+', 'Countries']].map(([num, label]) => (
               <div key={label} className="text-center">
@@ -386,7 +404,7 @@ export default function App() {
           </div>
         </div>
 
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce" style={{ zIndex: 10 }}>
           <button onClick={() => scrollTo('services')} className="text-teal-400/50 hover:text-teal-400 transition-colors">
             <ChevronDown size={28} />
           </button>
@@ -481,23 +499,6 @@ export default function App() {
               Benny John has contributed to projects including <strong className="text-teal-300">Dance Meri Rani, The Birthday Boy, Lakeerein, and The Wife</strong>, along with collaborations connected to Hardik Pandya.
             </p>
 
-            <div className="flex flex-wrap gap-4">
-              <a href="https://www.youtube.com/playlist?list=PLhNh5CSWfM_SI-ds5c3NV-s9JbCHlyidr"
-                target="_blank" rel="noopener noreferrer"
-                className="btn-outline px-5 py-2.5 rounded-full text-sm font-semibold text-teal-300 flex items-center gap-2">
-                <Youtube size={15} />
-                <span>YouTube Playlist</span>
-                <ExternalLink size={12} />
-              </a>
-              <a href="https://www.imdb.com/name/nm17141531/?ref_=ext_shr_lnk"
-                target="_blank" rel="noopener noreferrer"
-                className="btn-outline px-5 py-2.5 rounded-full text-sm font-semibold text-teal-300 flex items-center gap-2">
-                <Film size={15} />
-                <span>IMDB Profile</span>
-                <ExternalLink size={12} />
-              </a>
-            </div>
-
             {/* Features */}
             <div className="space-y-4 mt-8">
             {[
@@ -526,9 +527,26 @@ export default function App() {
                   </span>
                 ))}
               </div>
-            </div>
+            </div>	
           </div>
         </div>
+		<br></br> <br></br>
+		<div className="flex justify-center items-center gap-4 w-full mx-auto">
+              <a href="https://www.youtube.com/playlist?list=PLhNh5CSWfM_SI-ds5c3NV-s9JbCHlyidr"
+                target="_blank" rel="noopener noreferrer"
+                className="btn-outline px-5 py-2.5 rounded-full text-sm font-semibold text-teal-300 flex items-center gap-2">
+                <Youtube size={15} />
+                <span>YouTube Playlist</span>
+                <ExternalLink size={12} />
+              </a>
+              <a href="https://www.imdb.com/name/nm17141531/?ref_=ext_shr_lnk"
+                target="_blank" rel="noopener noreferrer"
+                className="btn-outline px-5 py-2.5 rounded-full text-sm font-semibold text-teal-300 flex items-center gap-2">
+                <Film size={15} />
+                <span>IMDB Profile</span>
+                <ExternalLink size={12} />
+              </a>
+            </div>
       </section>
 
       {/* ── PORTFOLIO ─────────────────────────────────────────────────── */}
