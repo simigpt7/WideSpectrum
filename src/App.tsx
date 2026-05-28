@@ -314,14 +314,14 @@ export default function App() {
               </li>
             ))}
             <li>
-              <button
+				 <button
                 onClick={() => scrollTo('contact')}
                 className="btn-primary px-5 py-2.5 rounded-full text-sm font-semibold text-white"
               >
                 <span>Book a Free Consultation</span>
-              </button>
+				</button>
             </li>
-          </ul>
+				</ul> 
 
           {/* Mobile toggle */}
           <button className="md:hidden text-teal-300 p-2" onClick={() => setNavOpen(!navOpen)}>
@@ -365,7 +365,7 @@ export default function App() {
 
         {/* 3D particle canvas — sits above video */}
         <HeroCanvas />
-        <div className="hero-scanline" style={{ zIndex: 4 }} />
+        {/* <div className="hero-scanline" style={{ zIndex: 4 }} />*/}
 		{/* Bhaswati change code */}
         {/* Content — highest z-index */}
         <div className="relative z-20 text-center px-6 max-w-5xl mx-auto w-full flex flex-col items-center translate-y-10" style={{ zIndex: 10 }}>
@@ -383,15 +383,17 @@ export default function App() {
             Premium music production, mixing, mastering, and live band design —
             trusted by artists and brands worldwide.
           </p>
-
+		 
+          { /* bhaswati code 
           <div className="animate-fade-up flex flex-col sm:flex-row gap-4 justify-center mb-16 w-full"
             style={{ animationDelay: '1.8s' }}>
+			
             <button onClick={() => scrollTo('contact')}
               className="btn-primary px-8 py-4 rounded-full text-base font-bold text-white flex items-center gap-2 justify-center mx-auto sm:mx-0">
               <span>Book a Free Consultation</span>
               <ArrowRight size={16} />
-            </button>
-          </div>
+            </button> 
+          </div>*/}
 
           <div className="animate-fade-up grid grid-cols-3 gap-6 max-w-lg mx-auto w-full"
             style={{ animationDelay: '2s' }}>
@@ -487,16 +489,16 @@ export default function App() {
               Where <span className="gradient-text">Creativity</span><br />Meets Technology
             </h2>
             <p className="text-teal-200/60 leading-relaxed mb-4">
-              For <strong className="text-teal-300">Benny John</strong>, music has never been just about production — it's about turning emotion, stories, and ideas into something people can hear, feel, and carry with them.
+              For <strong className="text-teal-300">Benny John</strong>, music has never been just about production ; it's about turning emotion, stories and ideas into something people can hear, feel, and carry with them.
             </p>
             <p className="text-teal-200/60 leading-relaxed mb-4">
-              Over the years, this approach has led to collaborations with artists including <strong className="text-teal-300">Arijit Singh, Tanishk Bagchi, Faheem Abdullah, Dhvani Bhanushali,</strong> and Sunny M.R.
+              Over the years, this approach has led to collaborations with artists including <strong className="text-teal-300">Arijit Singh, Tanishk Bagchi, Faheem Abdullah, Dhvani Bhanushali,</strong> and <strong className="text-teal-300">Sunny M.R</strong>.
             </p>
             <p className="text-teal-200/60 leading-relaxed mb-4">
-              <strong className="text-teal-300">WideSpectrum Productions (WSP)</strong> grew from that journey — a creative space where music is developed with clarity, collaboration, and attention to detail.
+              <strong className="text-teal-300">WideSpectrum Productions (WSP)</strong> grew from that journey — a creative space where music is developed with clarity, collaboration, and attention to detail. Supported by a skilled team of composers, producers, lyricists, and engineers actively working in the industry, WSP handles every stage of the process, from composition to final master.
             </p>
             <p className="text-teal-200/60 leading-relaxed mb-8">
-              Benny John has contributed to projects including <strong className="text-teal-300">Dance Meri Rani, The Birthday Boy, Lakeerein, and The Wife</strong>, along with collaborations connected to Hardik Pandya.
+              Benny John has contributed to projects including <strong className="text-teal-300">Dance Meri Rani, The Birthday Boy, Lakeerein, and The Wife</strong>, along with collaborations connected to Hardik Pandya. Today, WSP works with artists, filmmakers, and brands to create music that is thoughtful, refined, and built to connect.
             </p>
 
             {/* Features */}
@@ -518,8 +520,12 @@ export default function App() {
             ))}
             </div>
 
-            <div className="glass-card p-5 rounded-xl mt-4">
-              <p className="text-xs text-teal-400/50 uppercase tracking-widest mb-3">Collaborated With</p>
+            
+          </div>
+        </div>
+		<br></br>
+		<div className="glass-card w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center px-8 py-6 rounded-2xl mt-4">
+              <p className="text-xs text-teal-400/50 uppercase tracking-widest mb-3">Worked With</p>
               <div className="flex flex-wrap gap-2">
                 {['Arijit Singh', 'Tanishk Bagchi', 'Dhvani Bhanushali', 'Nora Fatehi', 'Jubin Nautiyal', 'Sunny M.R.', 'Hardik Pandya'].map(name => (
                   <span key={name} className="px-3 py-1 rounded-full text-xs font-medium bg-teal-900/40 text-teal-300 border border-teal-800/40">
@@ -528,9 +534,7 @@ export default function App() {
                 ))}
               </div>
             </div>	
-          </div>
-        </div>
-		<br></br> <br></br>
+		<br></br>
 		<div className="flex justify-center items-center gap-4 w-full mx-auto">
               <a href="https://www.youtube.com/playlist?list=PLhNh5CSWfM_SI-ds5c3NV-s9JbCHlyidr"
                 target="_blank" rel="noopener noreferrer"
@@ -697,7 +701,7 @@ export default function App() {
 
               {[
                 { icon: MapPin, label: 'Located at', val: 'Mumbai, Maharashtra, India' },
-                { icon: Mail, label: 'Email Us', val: 'WideSpectrumProductions@gmail.com', href: 'mailto:WideSpectrumProductions@gmail.com' },
+                { icon: Mail, label: 'Email Us', val: 'widespectrumproductions@gmail.com', href: 'mailto:widespectrumproductions@gmail.com' },
               ].map(({ icon: Icon, label, val, href }) => (
                 <div key={label} className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-lg bg-teal-900/50 flex items-center justify-center shrink-0">
