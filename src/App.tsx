@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
-  Music, Mic2, Radio, Film, Zap, Sliders, Disc, Podcast,
+  Music, Mic2, Radio, Film, Zap, Sliders, Disc, Megaphone,
   ChevronDown, Play, ArrowRight, MapPin, Mail, Phone,
-  Instagram, Youtube, Facebook, Star, Menu, X, ExternalLink
+  Instagram, Youtube, Star, Menu, X, ExternalLink, Headphones, Trophy, Handshake
 } from 'lucide-react';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -31,13 +31,13 @@ function HeroCanvas() {
     resize();
 
     function spawnParticles() {
-      particlesRef.current = Array.from({ length: 90 }, () => ({
+      particlesRef.current = Array.from({ length: 100 }, () => ({
         x: Math.random() * canvas!.width,
         y: Math.random() * canvas!.height,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
-        size: Math.random() * 2 + 0.5,
-        opacity: Math.random() * 0.5 + 0.1,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        size: Math.random() * 2.5 + 0.5,
+        opacity: Math.random() * 0.5 + 0.15,
         color: colors[Math.floor(Math.random() * colors.length)],
       }));
     }
@@ -55,13 +55,12 @@ function HeroCanvas() {
         if (p.y < 0) p.y = canvas!.height;
         if (p.y > canvas!.height) p.y = 0;
 
-        // Mouse repulsion
         const dx = p.x - mouseRef.current.x;
         const dy = p.y - mouseRef.current.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 100) {
-          p.vx += dx / dist * 0.05;
-          p.vy += dy / dist * 0.05;
+        if (dist < 120) {
+          p.vx += dx / dist * 0.06;
+          p.vy += dy / dist * 0.06;
         }
 
         ctx.beginPath();
@@ -70,17 +69,16 @@ function HeroCanvas() {
         ctx.globalAlpha = p.opacity;
         ctx.fill();
 
-        // Connect nearby particles
         for (let j = i + 1; j < pts.length; j++) {
           const q = pts[j];
           const d = Math.hypot(p.x - q.x, p.y - q.y);
-          if (d < 100) {
+          if (d < 120) {
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(q.x, q.y);
             ctx.strokeStyle = '#1F8A8A';
-            ctx.globalAlpha = (1 - d / 100) * 0.15;
-            ctx.lineWidth = 0.5;
+            ctx.globalAlpha = (1 - d / 120) * 0.12;
+            ctx.lineWidth = 0.6;
             ctx.stroke();
           }
         }
@@ -116,7 +114,7 @@ function WaveEQ({ bars = 8, className = '' }: { bars?: number; className?: strin
           key={i}
           className="wave-bar"
           style={{
-            '--dur': `${0.5 + Math.random() * 0.7}s`,
+            '--dur': `${0.5 + Math.random() * 0.8}s`,
             '--delay': `${i * 0.1}s`,
           } as React.CSSProperties}
         />
@@ -135,7 +133,7 @@ function AnimLetters({ text, className = '', baseDelay = 0 }: {
         <span
           key={i}
           className="inline-block animate-letter-reveal"
-          style={{ animationDelay: `${baseDelay + i * 0.05}s` }}
+          style={{ animationDelay: `${baseDelay + i * 0.04}s` }}
         >
           {ch === ' ' ? '\u00A0' : ch}
         </span>
@@ -167,19 +165,19 @@ function Marquee() {
   );
 }
 
-// ── Services data ──────────────────────────────────────────────────────────
+// ── Services data (from GitHub) ─────────────────────────────────────────────
 const SERVICES = [
-  { icon: Music, title: 'Music Production', desc: 'Full-scale production from concept to final record — arrangement, orchestration, live instrumentation, beat production, artistic direction.', num: '01' },
-  { icon: Mic2, title: 'Lyrics & Composition', desc: 'Original songwriting combining meaningful lyrics with compelling melodies tailored to your artistic style and genre.', num: '02' },
-  { icon: Radio, title: 'Live Band Design', desc: 'End-to-end design of your live sound, adapting studio records into powerful, stage-ready performances.', num: '03' },
-  { icon: Film, title: 'Background Scoring', desc: 'Music composed to enhance visual storytelling with emotion, tension, and atmosphere for film, ads, and visuals.', num: '04' },
-  { icon: Zap, title: 'Ads & Jingles', desc: 'Catchy sonic branding crafted to build brand recall and connect with audiences across TV, digital, and radio.', num: '05' },
-  { icon: Sliders, title: 'Mixing', desc: 'Detailed mixing that balances and refines each element into a cohesive, professional track with depth and clarity.', num: '06' },
-  { icon: Disc, title: 'Mastering', desc: 'Technical finalization ensuring translation, consistency, and competitive loudness across all playback systems.', num: '07' },
-  { icon: Podcast, title: 'Podcast Production', desc: 'Clean, professional podcast audio designed for clarity, consistency, and listener engagement on all platforms.', num: '08' },
+  { icon: Sliders, title: 'Music Production', desc: 'Full-scale music production from concept to final record', features: ['Arrangement & orchestration', 'Live Instrumentation', 'Beat production', 'Artistic direction'], featured: true, num: '01' },
+  { icon: Mic2, title: 'Lyrics & Composition', desc: 'Original songwriting that combines meaningful lyrics with compelling melodies tailored to your style.', features: ['Lyrics writing', 'Melody composition', 'Song structuring', 'Genre-specific writing'], num: '02' },
+  { icon: Headphones, title: 'Live Band Design Production', desc: 'End-to-end design of your live sound, adapting studio records into powerful, stage-ready performances.', features: ['Band arrangement & restructuring', 'Live sound design', 'Playback & session design', 'Performance flow planning'], num: '03' },
+  { icon: Music, title: 'Background Scoring', desc: 'Music composed to enhance visual storytelling with emotion, tension, and atmosphere.', features: ['Film, ads & visual scoring', 'Theme and motif creation', 'Scene-specific composition', 'Hybrid/orchestral sound design'], num: '04' },
+  { icon: Megaphone, title: 'Ads & Jingles', desc: 'Catchy music crafted to build brand recall and connect with audiences', features: ['Sonic branding', 'Jingles & hooks', 'Voiceover integration', 'Format adaptations (TV, digital, radio)'], num: '05' },
+  { icon: Play, title: 'Mixing', desc: 'Detailed mixing that balances, enhances, and refines each element into a cohesive, professional track', features: ['EQ, compression & dynamics control', 'Stereo imaging & depth', 'Vocal tuning & timing alignment'], num: '06' },
+  { icon: Disc, title: 'Mastering', desc: 'Technical finalization to ensure translation, consistency, and competitive loudness across all systems.', features: ['Loudness & tonal balance optimization', 'Stereo enhancement', 'Multi-format exports (WAV, streaming specs)', 'Final quality checks'], num: '07' },
+  { icon: Zap, title: 'Podcast Production', desc: 'Clean, professional podcast audio production designed for clarity, consistency, and listener engagement.', features: ['Audio editing & noise reduction', 'EQ, compression & leveling', 'Intro/outro production', 'Platform-ready exports'], num: '08' },
 ];
 
-// ── Portfolio videos ───────────────────────────────────────────────────────
+// ── Portfolio videos (from GitHub) ─────────────────────────────────────────
 const VIDEOS = [
   { id: 'G-XMiVMlLRI', title: 'Dance Meri Rani', artist: 'Nora Fatehi' },
   { id: 'qutnNui6Jzc', title: 'Sin Denim X Hardik Pandya', artist: 'Hardik Pandya' },
@@ -192,14 +190,15 @@ const VIDEOS = [
   { id: 'iV5rNXgQySg', title: 'Teri Baaton Mein', artist: 'Benny John' },
 ];
 
-// ── Testimonials ───────────────────────────────────────────────────────────
+// ── Testimonials (from GitHub - 7 total) ───────────────────────────────────
 const TESTIMONIALS = [
-  { text: "I wanted to take a moment to sincerely thank you and the entire team for your outstanding work and professionalism throughout our collaboration. Your expertise and the quality of your work truly exceptional.", name: 'Subhashini Demkah', role: 'Pop Artist' },
+  { text: "I wanted to take a moment to sincerely thank you and the entire team for your outstanding work and professionalism throughout our collaboration. Your expertise and the quality of your work truly exceptional and it has been an absolute pleasure working with you. From start to finish, your dedication, attention to detail, and clear communication made the process seamless and enjoyable. I deeply appreciate the effort and care you put into everything.", name: 'Subhashini Demkah', role: 'Pop Artist' },
   { text: "The production quality was more than what I expected. He really understands the requirement and executes it. Very professional and experienced.", name: 'Bhaswati Sengupta', role: 'Bollywood Pop Artist' },
-  { text: "He is multi-talented artist and understands the requirements of the artist thoroughly. Very creative and gives new inputs to every phrase of the track. Great work always.", name: 'Anish Chabbra', role: 'Indie PopStar' },
-  { text: "He has an excellent comprehension of music and a natural ear for how a song should sound and be produced. His work ethic is excellent, and he puts his heart and soul into each and every project.", name: 'Rachit', role: 'Singer-Songwriter' },
-  { text: "Amazing music producer! Understands your work very calmly and gives it the way you want. His sense of music is superb and his work is very clean.", name: 'Rohini Garg', role: 'Bollywood Pop Artist' },
-  { text: "A Brilliant Music Producer! Understands what you want and delivers it right. Great nature and Super Fun to work with!", name: 'Pari Thakur', role: 'Bollywood Pop Artist' },
+  { text: "He is multi-talented artist and understands the requirements of the artist thoroughly. Very creative and gives new inputs to every phrase of the track. Since he plays multiple instruments and he has mastered programming with latest tools, so he has a great sense of instrument application and has latest collection of custom tones that gives an absolutely different array to the sound of my tracks. Great work always.", name: 'Anish Chabbra', role: 'Indie PopStar' },
+  { text: "I've known Benny for a very long time and have always been an enormous admirer of his work. He has an excellent comprehension of music and a natural ear for how a song should sound and be produced. Any composition would be enhanced and the melody would be lifted a hundred times over by the addition of contemporary components, funky bass lines, and imaginative arrangements. His work ethic is excellent, and he puts his heart and soul into each and every project.", name: 'Rachit', role: 'Singer-Songwriter' },
+  { text: "Amazing music producer he is! I have worked with him for my original and cover songs. His sense of music is superb, his work is very clean. He will understand your work very calmly and give it the way you want.", name: 'Rohini Garg', role: 'Bollywood Pop Artist' },
+  { text: "A Brilliant Music Producer! One of the best ones I've ever worked with. Understands what you want and delivers it right. Great nature and Super Fun to work with!", name: 'Pari Thakur', role: 'Bollywood Pop Artist' },
+  { text: "Benny John is an emerging Music Producer from South India. Now he is located in Mumbai. His Music productions is having some unique features. His feel in his Music Productions is awesome. Wish him all the best in his career. May God Bless him.", name: 'Dr. P. J. Santhosh Kumar', role: 'Gospel Artist' },
 ];
 
 // ── useReveal hook ─────────────────────────────────────────────────────────
@@ -227,14 +226,12 @@ export default function App() {
 
   useReveal();
 
-  // Scroll watcher
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Cursor glow
   useEffect(() => {
     const move = (e: MouseEvent) => {
       if (cursorRef.current) {
@@ -246,9 +243,8 @@ export default function App() {
     return () => window.removeEventListener('mousemove', move);
   }, []);
 
-  // Testimonial auto-advance
   useEffect(() => {
-    const id = setInterval(() => setTestimonialIdx(i => (i + 1) % TESTIMONIALS.length), 6000);
+    const id = setInterval(() => setTestimonialIdx(i => (i + 1) % TESTIMONIALS.length), 5000);
     return () => clearInterval(id);
   }, []);
 
@@ -260,11 +256,11 @@ export default function App() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const msg = `Hello Wide Spectrum Productions,\n\nName: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nService: ${formData.service}\n\n${formData.message}`;
-    window.open(`https://wa.me/919819025889?text=${encodeURIComponent(msg)}`, '_blank');
+    const msg = `Hello Wide Spectrum Productions,\n\nI would like to book a free consultation.\nName: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || 'Not provided'}\nService: ${formData.service}\n\nProject Details: ${formData.message}\n\nPlease get back to me when convenient.`;
+    window.open(`https://wa.me/917708813596?text=${encodeURIComponent(msg)}`, '_blank');
     setFormSent(true);
     setFormData({ name: '', email: '', phone: '', service: '', message: '' });
-    setTimeout(() => setFormSent(false), 5000);
+    setTimeout(() => setFormSent(false), 6000);
   }
 
   const NAV = ['services', 'about', 'portfolio', 'testimonials', 'contact'];
@@ -273,17 +269,16 @@ export default function App() {
     <div className="min-h-screen" style={{ background: 'var(--dark-bg)' }}>
       {/* Cursor glow */}
       <div ref={cursorRef} className="cursor-glow" />
-
       {/* Noise overlay */}
       <div className="noise-overlay" />
 
       {/* ── NAVBAR ────────────────────────────────────────────────────── */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'nav-blur py-3' : 'py-5'}`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <a href="#home" onClick={() => scrollTo('home')} className="flex items-center gap-3 group">
+          <button onClick={() => scrollTo('home')} className="flex items-center gap-3 group">
             <div className="relative">
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-teal-700 to-teal-400 flex items-center justify-center shadow-lg shadow-teal-900/50">
-                <Music size={18} className="text-white" />
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-700 to-teal-400 flex items-center justify-center shadow-lg shadow-teal-900/50">
+                <Music size={20} className="text-white" />
               </div>
               <div className="absolute inset-0 rounded-lg bg-teal-400/20 blur-md group-hover:blur-xl transition-all duration-300" />
             </div>
@@ -291,7 +286,7 @@ export default function App() {
               <span className="gradient-text">Wide</span>
               <span className="text-white">Spectrum</span>
             </span>
-          </a>
+          </button>
 
           {/* Desktop nav */}
           <ul className="hidden md:flex items-center gap-8">
@@ -311,7 +306,7 @@ export default function App() {
                 onClick={() => scrollTo('contact')}
                 className="btn-primary px-5 py-2.5 rounded-full text-sm font-semibold text-white"
               >
-                <span>Book Now</span>
+                <span>Book a Free Consultation</span>
               </button>
             </li>
           </ul>
@@ -323,7 +318,7 @@ export default function App() {
         </div>
 
         {/* Mobile menu */}
-        <div className={`md:hidden transition-all duration-300 overflow-hidden ${navOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'}`}>
+        <div className={`md:hidden transition-all duration-300 overflow-hidden ${navOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
           <div className="nav-blur px-6 pb-4 pt-2 flex flex-col gap-4">
             {[...NAV, 'Book Now'].map(item => (
               <button
@@ -341,22 +336,15 @@ export default function App() {
       {/* ── HERO ──────────────────────────────────────────────────────── */}
       <section id="home" className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
         <HeroCanvas />
-
-        {/* Scanline effect */}
         <div className="hero-scanline" />
-
-        {/* Radial glow blobs */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full opacity-10"
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full opacity-15"
           style={{ background: 'radial-gradient(circle, #1F8A8A, transparent)', filter: 'blur(60px)' }} />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full opacity-10"
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full opacity-15"
           style={{ background: 'radial-gradient(circle, #3ED6A0, transparent)', filter: 'blur(60px)' }} />
-
-        {/* Grid lines */}
         <div className="absolute inset-0 opacity-5"
           style={{ backgroundImage: 'linear-gradient(rgba(31,138,138,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(31,138,138,0.4) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
 
         <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
-          {/* Pre-title */}
           <div className="animate-fade-up mb-6" style={{ animationDelay: '0.2s' }}>
             <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full border border-teal-800/60 bg-teal-950/40">
               <WaveEQ bars={5} />
@@ -365,44 +353,32 @@ export default function App() {
             </div>
           </div>
 
-          {/* Main heading */}
           <h1 className="mb-4" style={{ fontFamily: 'Montserrat, sans-serif', perspective: '800px' }}>
-            <span className="block text-[clamp(2.5rem,8vw,6rem)] font-black leading-none tracking-tighter text-white mb-2">
-              <AnimLetters text="BUILD YOUR" baseDelay={0.4} />
+            <span className="block text-[clamp(2.2rem,7vw,5.5rem)] font-black leading-none tracking-tighter text-white mb-2">
+              <AnimLetters text="Build Your Sound" baseDelay={0.4} />
             </span>
-            <span className="block text-[clamp(2.5rem,8vw,6rem)] font-black leading-none tracking-tighter gradient-text animate-glow-pulse mb-2">
-              <AnimLetters text="SOUND ACROSS" baseDelay={0.9} />
-            </span>
-            <span className="block text-[clamp(2.5rem,8vw,6rem)] font-black leading-none tracking-tighter text-white">
-              <AnimLetters text="THE SPECTRUM" baseDelay={1.4} />
+            <span className="block text-[clamp(2.2rem,7vw,5.5rem)] font-black leading-none tracking-tighter gradient-text animate-glow-pulse mb-2">
+              <AnimLetters text="Across the Spectrum" baseDelay={0.9} />
             </span>
           </h1>
 
-          {/* Subtitle */}
           <p className="animate-fade-up text-lg md:text-xl text-teal-200/60 max-w-2xl mx-auto mb-10 font-light leading-relaxed"
-            style={{ animationDelay: '2s' }}>
+            style={{ animationDelay: '1.6s' }}>
             Premium music production, mixing, mastering, and live band design —
             trusted by artists and brands worldwide.
           </p>
 
-          {/* CTA buttons */}
           <div className="animate-fade-up flex flex-col sm:flex-row gap-4 justify-center mb-16"
-            style={{ animationDelay: '2.2s' }}>
+            style={{ animationDelay: '1.8s' }}>
             <button onClick={() => scrollTo('contact')}
               className="btn-primary px-8 py-4 rounded-full text-base font-bold text-white flex items-center gap-2 justify-center">
-              <span>Book Free Consultation</span>
+              <span>Book a Free Consultation</span>
               <ArrowRight size={16} />
-            </button>
-            <button onClick={() => scrollTo('portfolio')}
-              className="btn-outline px-8 py-4 rounded-full text-base font-semibold text-teal-300 flex items-center gap-2 justify-center">
-              <Play size={16} fill="currentColor" />
-              <span>Listen to Our Work</span>
             </button>
           </div>
 
-          {/* Stats */}
           <div className="animate-fade-up grid grid-cols-3 gap-6 max-w-lg mx-auto"
-            style={{ animationDelay: '2.4s' }}>
+            style={{ animationDelay: '2s' }}>
             {[['300+', 'Projects Completed'], ['10+', 'Years Experience'], ['7+', 'Countries']].map(([num, label]) => (
               <div key={label} className="text-center">
                 <div className="stat-value text-3xl md:text-4xl">{num}</div>
@@ -412,7 +388,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* Scroll indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
           <button onClick={() => scrollTo('services')} className="text-teal-400/50 hover:text-teal-400 transition-colors">
             <ChevronDown size={28} />
@@ -427,30 +402,43 @@ export default function App() {
       <section id="services" className="py-28 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16 reveal">
-            <span className="text-xs font-bold tracking-[0.3em] text-teal-400 uppercase mb-3 block">What We Do</span>
+            <span className="text-xs font-bold tracking-[0.3em] text-teal-400 uppercase mb-3 block">What We Offer</span>
             <h2 className="text-4xl md:text-5xl font-black text-white mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-              Our <span className="gradient-text">Services</span>
+              OUR SERVICE <span className="gradient-text">SPECTRUM</span>
             </h2>
             <p className="text-teal-200/50 max-w-xl mx-auto">
-              End-to-end music production ecosystem under one roof
+              Professional audio services tailored to bring your creative vision to life
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {SERVICES.map((svc, i) => (
               <div
                 key={svc.num}
-                className="glass-card p-6 rounded-xl cursor-pointer group reveal"
-                style={{ animationDelay: `${i * 0.08}s`, transitionDelay: `${i * 0.05}s` }}
+                className="glass-card p-6 rounded-xl cursor-pointer group reveal relative"
+                style={{ transitionDelay: `${i * 0.05}s` }}
               >
+                {svc.featured && (
+                  <div className="absolute top-4 right-4 px-2 py-0.5 bg-teal-600/80 rounded text-[10px] font-bold text-white uppercase tracking-wider">
+                    Most Popular
+                  </div>
+                )}
                 <div className="service-number mb-2">{svc.num}</div>
-                <div className="w-10 h-10 rounded-lg bg-teal-900/50 flex items-center justify-center mb-4 group-hover:bg-teal-700/50 transition-colors">
-                  <svc.icon size={20} className="text-teal-400" />
+                <div className="w-11 h-11 rounded-lg bg-teal-900/50 flex items-center justify-center mb-4 group-hover:bg-teal-700/50 transition-colors">
+                  <svc.icon size={22} className="text-teal-400" />
                 </div>
                 <h3 className="font-bold text-white mb-2 text-sm tracking-wide">{svc.title}</h3>
-                <p className="text-teal-200/40 text-xs leading-relaxed line-clamp-4">{svc.desc}</p>
-                <div className="mt-4 flex items-center gap-1 text-teal-400 text-xs font-semibold group-hover:gap-2 transition-all">
-                  <span>Book Now</span>
+                <p className="text-teal-200/40 text-xs leading-relaxed mb-3">{svc.desc}</p>
+                <ul className="space-y-1 mb-4">
+                  {svc.features.map(f => (
+                    <li key={f} className="flex items-start gap-2 text-teal-300/50 text-xs">
+                      <span className="text-teal-400 mt-0.5">✓</span>
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-auto flex items-center gap-1 text-teal-400 text-xs font-semibold group-hover:gap-2 transition-all">
+                  <span>Learn More</span>
                   <ArrowRight size={12} />
                 </div>
               </div>
@@ -461,7 +449,6 @@ export default function App() {
 
       {/* ── ABOUT ─────────────────────────────────────────────────────── */}
       <section id="about" className="py-28 px-6 relative overflow-hidden">
-        {/* Background accent */}
         <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1/2 h-full opacity-5"
           style={{ background: 'radial-gradient(ellipse at right, #1F8A8A, transparent)', filter: 'blur(80px)' }} />
 
@@ -478,8 +465,11 @@ export default function App() {
             <p className="text-teal-200/60 leading-relaxed mb-4">
               Over the years, this approach has led to collaborations with artists including <strong className="text-teal-300">Arijit Singh, Tanishk Bagchi, Faheem Abdullah, Dhvani Bhanushali,</strong> and Sunny M.R.
             </p>
-            <p className="text-teal-200/60 leading-relaxed mb-8">
+            <p className="text-teal-200/60 leading-relaxed mb-4">
               <strong className="text-teal-300">WideSpectrum Productions (WSP)</strong> grew from that journey — a creative space where music is developed with clarity, collaboration, and attention to detail.
+            </p>
+            <p className="text-teal-200/60 leading-relaxed mb-8">
+              Benny John has contributed to projects including <strong className="text-teal-300">Dance Meri Rani, The Birthday Boy, Lakeerein, and The Wife</strong>, along with collaborations connected to Hardik Pandya.
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -500,12 +490,12 @@ export default function App() {
             </div>
           </div>
 
-          {/* Right: feature cards */}
+          {/* Right */}
           <div className="reveal-right space-y-4">
             {[
-              { title: 'World-Class Sound', desc: 'Globally competitive production quality trusted by artists and brands across 7+ countries.', icon: Disc },
-              { title: 'End-to-End Ecosystem', desc: 'From idea to final master, every stage handled seamlessly under one roof.', icon: Sliders },
-              { title: 'Artist-Led Approach', desc: 'Every project is shaped around your creative vision, not a pre-built template.', icon: Mic2 },
+              { title: 'World-Class Sound', desc: 'We deliver globally competitive production quality trusted by artists and brands', icon: Headphones },
+              { title: 'End-to-End Ecosystem', desc: 'From idea to final master, everything happens seamlessly under one roof.', icon: Trophy },
+              { title: 'Artist-Led Approach', desc: 'Every project is shaped around your vision, not a template', icon: Handshake },
             ].map((f, i) => (
               <div key={i} className="glass-card p-5 rounded-xl flex items-start gap-4">
                 <div className="w-10 h-10 rounded-lg bg-teal-900/50 flex items-center justify-center shrink-0">
@@ -518,11 +508,10 @@ export default function App() {
               </div>
             ))}
 
-            {/* Collaborations ticker */}
             <div className="glass-card p-5 rounded-xl">
               <p className="text-xs text-teal-400/50 uppercase tracking-widest mb-3">Collaborated With</p>
               <div className="flex flex-wrap gap-2">
-                {['Arijit Singh', 'Tanishk Bagchi', 'Dhvani Bhanushali', 'Nora Fatehi', 'Jubin Nautiyal', 'Sunny M.R.'].map(name => (
+                {['Arijit Singh', 'Tanishk Bagchi', 'Dhvani Bhanushali', 'Nora Fatehi', 'Jubin Nautiyal', 'Sunny M.R.', 'Hardik Pandya'].map(name => (
                   <span key={name} className="px-3 py-1 rounded-full text-xs font-medium bg-teal-900/40 text-teal-300 border border-teal-800/40">
                     {name}
                   </span>
@@ -580,7 +569,7 @@ export default function App() {
             ))}
           </div>
 
-          <div className="text-center mt-10 reveal">
+          <div className="text-center mt-10 reveal flex gap-4 justify-center flex-wrap">
             <a
               href="https://www.youtube.com/playlist?list=PLhNh5CSWfM_SI-ds5c3NV-s9JbCHlyidr"
               target="_blank" rel="noopener noreferrer"
@@ -588,6 +577,15 @@ export default function App() {
             >
               <Youtube size={16} />
               View Full Playlist on YouTube
+              <ExternalLink size={14} />
+            </a>
+            <a
+              href="https://www.imdb.com/name/nm17141531/?ref_=ext_shr_lnk"
+              target="_blank" rel="noopener noreferrer"
+              className="btn-outline px-6 py-3 rounded-full text-sm font-semibold text-teal-300 inline-flex items-center gap-2"
+            >
+              <Film size={16} />
+              Go to IMDB
               <ExternalLink size={14} />
             </a>
           </div>
@@ -605,9 +603,9 @@ export default function App() {
             <h2 className="text-4xl md:text-5xl font-black text-white mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               What <span className="gradient-text">Artists Say</span>
             </h2>
+            <p className="text-teal-200/50">Don't just take our word for it</p>
           </div>
 
-          {/* Active testimonial */}
           <div className="reveal">
             <div className="glass-card p-8 md:p-12 rounded-2xl text-center relative">
               <div className="flex justify-center mb-6">
@@ -624,7 +622,6 @@ export default function App() {
               <p className="text-teal-400 text-sm">{TESTIMONIALS[testimonialIdx].role}</p>
             </div>
 
-            {/* Dots */}
             <div className="flex justify-center gap-2 mt-6">
               {TESTIMONIALS.map((_, i) => (
                 <button
@@ -644,15 +641,14 @@ export default function App() {
           <div className="text-center mb-16 reveal">
             <span className="text-xs font-bold tracking-[0.3em] text-teal-400 uppercase mb-3 block">Get in Touch</span>
             <h2 className="text-4xl md:text-5xl font-black text-white mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-              Book Your Free <span className="gradient-text">Consultation</span>
+              Book your free <span className="gradient-text">Consultation</span>
             </h2>
             <p className="text-teal-200/50 max-w-xl mx-auto">
-              Ready to start your next project? Let's create something amazing together.
+              Ready to start your next project? Let's talk!
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Info */}
             <div className="reveal-left space-y-8">
               <div>
                 <h3 className="text-xl font-bold text-white mb-4">Let's Create Something Amazing</h3>
@@ -662,9 +658,8 @@ export default function App() {
               </div>
 
               {[
-                { icon: MapPin, label: 'Located at', val: 'Mumbai, India' },
+                { icon: MapPin, label: 'Located at', val: 'Mumbai, Maharashtra, India' },
                 { icon: Mail, label: 'Email Us', val: 'WideSpectrumProductions@gmail.com', href: 'mailto:WideSpectrumProductions@gmail.com' },
-                { icon: Phone, label: 'Call / WhatsApp', val: '+91 98190 25889', href: 'tel:+919819025889' },
               ].map(({ icon: Icon, label, val, href }) => (
                 <div key={label} className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-lg bg-teal-900/50 flex items-center justify-center shrink-0">
@@ -673,7 +668,7 @@ export default function App() {
                   <div>
                     <p className="text-xs text-teal-400/50 uppercase tracking-widest mb-0.5">{label}</p>
                     {href ? (
-                      <a href={href} className="text-teal-200 hover:text-teal-300 transition-colors font-medium text-sm">{val}</a>
+                      <a href={href} className="text-teal-200 hover:text-teal-300 transition-colors font-medium text-sm underline">{val}</a>
                     ) : (
                       <p className="text-teal-200 font-medium text-sm">{val}</p>
                     )}
@@ -681,12 +676,11 @@ export default function App() {
                 </div>
               ))}
 
-              {/* Social icons */}
               <div className="flex gap-3 pt-2">
                 {[
-                  { icon: Instagram, href: '#' },
                   { icon: Youtube, href: 'https://www.youtube.com/playlist?list=PLhNh5CSWfM_SI-ds5c3NV-s9JbCHlyidr' },
-                  { icon: Facebook, href: '#' },
+                  { icon: Instagram, href: 'https://www.instagram.com/wide_spectrum_productions/' },
+                  { icon: Film, href: 'https://www.imdb.com/name/nm17141531/' },
                 ].map(({ icon: Icon, href }) => (
                   <a key={href} href={href} target="_blank" rel="noopener noreferrer"
                     className="w-10 h-10 rounded-lg bg-teal-900/40 border border-teal-800/40 flex items-center justify-center text-teal-400 hover:text-teal-300 hover:border-teal-500 hover:bg-teal-800/30 transition-all duration-200">
@@ -696,19 +690,18 @@ export default function App() {
               </div>
             </div>
 
-            {/* Form */}
             <div className="reveal-right">
               <form onSubmit={handleSubmit} className="glass-card p-8 rounded-2xl space-y-5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="text-xs text-teal-400/60 uppercase tracking-widest mb-1.5 block">Full Name *</label>
+                    <label className="text-xs text-teal-400/60 uppercase tracking-widest mb-1.5 block">Your Name *</label>
                     <input type="text" required placeholder="Your name"
                       value={formData.name}
                       onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
                       className="input-field w-full px-4 py-3 rounded-lg text-sm" />
                   </div>
                   <div>
-                    <label className="text-xs text-teal-400/60 uppercase tracking-widest mb-1.5 block">Email *</label>
+                    <label className="text-xs text-teal-400/60 uppercase tracking-widest mb-1.5 block">Email Address *</label>
                     <input type="email" required placeholder="your@email.com"
                       value={formData.email}
                       onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
@@ -717,25 +710,25 @@ export default function App() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="text-xs text-teal-400/60 uppercase tracking-widest mb-1.5 block">Phone</label>
-                    <input type="tel" placeholder="+91 XXXXX XXXXX"
+                    <label className="text-xs text-teal-400/60 uppercase tracking-widest mb-1.5 block">Phone Number</label>
+                    <input type="tel" placeholder="+91 98765 43210"
                       value={formData.phone}
                       onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))}
                       className="input-field w-full px-4 py-3 rounded-lg text-sm" />
                   </div>
                   <div>
-                    <label className="text-xs text-teal-400/60 uppercase tracking-widest mb-1.5 block">Service</label>
+                    <label className="text-xs text-teal-400/60 uppercase tracking-widest mb-1.5 block">Service Interested In *</label>
                     <select value={formData.service}
                       onChange={e => setFormData(p => ({ ...p, service: e.target.value }))}
-                      className="input-field w-full px-4 py-3 rounded-lg text-sm">
+                      className="input-field w-full px-4 py-3 rounded-lg text-sm" required>
                       <option value="">Select a service</option>
                       {SERVICES.map(s => <option key={s.num} value={s.title}>{s.title}</option>)}
                     </select>
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs text-teal-400/60 uppercase tracking-widest mb-1.5 block">Project Details *</label>
-                  <textarea required rows={4} placeholder="Tell us about your project..."
+                  <label className="text-xs text-teal-400/60 uppercase tracking-widest mb-1.5 block">Tell Us About Your Project *</label>
+                  <textarea required rows={5} placeholder="Project details..."
                     value={formData.message}
                     onChange={e => setFormData(p => ({ ...p, message: e.target.value }))}
                     className="input-field w-full px-4 py-3 rounded-lg text-sm resize-none" />
@@ -749,7 +742,7 @@ export default function App() {
 
                 <button type="submit"
                   className="btn-primary w-full py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2">
-                  <span>Send via WhatsApp</span>
+                  <span>Send Message</span>
                   <ArrowRight size={16} />
                 </button>
               </form>
@@ -781,7 +774,7 @@ export default function App() {
             </div>
 
             <p className="text-xs text-teal-400/30">
-              © {new Date().getFullYear()} WideSpectrum Productions. All rights reserved.
+              © 2025 Wide Spectrum Productions. All rights reserved.
             </p>
           </div>
         </div>
