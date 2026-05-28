@@ -317,3 +317,172 @@ body {
   width: 100%;
   height: 100%;
 }
+
+/* ── Hero Video Background ── */
+.hero-video-wrapper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.hero-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.hero-video-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(3, 10, 14, 0.55) 0%,
+    rgba(3, 10, 14, 0.35) 40%,
+    rgba(3, 10, 14, 0.65) 100%
+  );
+}
+
+/* ── Floating 3D Badge ── */
+@keyframes badgeFloat {
+  0%, 100% { transform: translateY(0px) rotateX(0deg) rotateY(0deg); }
+  25%       { transform: translateY(-10px) rotateX(6deg) rotateY(-8deg); }
+  50%       { transform: translateY(-6px) rotateX(-4deg) rotateY(6deg); }
+  75%       { transform: translateY(-14px) rotateX(5deg) rotateY(3deg); }
+}
+
+@keyframes badgeSpin {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(360deg); }
+}
+
+@keyframes badgeRingPulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50%       { transform: scale(1.12); opacity: 1; }
+}
+
+@keyframes badgeGlowPulse {
+  0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+  50%       { opacity: 0.9; transform: translate(-50%, -50%) scale(1.3); }
+}
+
+.floating-3d-badge {
+  position: fixed;
+  bottom: 40px;
+  right: 32px;
+  z-index: 999;
+  width: 88px;
+  height: 88px;
+  cursor: pointer;
+  perspective: 400px;
+  animation: badgeFloat 6s ease-in-out infinite;
+}
+
+.badge-3d-inner {
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.5s ease;
+}
+
+.floating-3d-badge:hover .badge-3d-inner {
+  animation: badgeSpin 1.2s ease-in-out;
+}
+
+.badge-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge-front {
+  background: radial-gradient(circle at 35% 30%, rgba(62, 214, 160, 0.25), rgba(8, 47, 58, 0.9) 70%);
+  border: 1.5px solid rgba(62, 214, 160, 0.5);
+  box-shadow:
+    0 0 30px rgba(62, 214, 160, 0.3),
+    0 0 60px rgba(31, 138, 138, 0.15),
+    inset 0 0 20px rgba(62, 214, 160, 0.08);
+  backdrop-filter: blur(8px);
+}
+
+.badge-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px solid rgba(62, 214, 160, 0.3);
+  animation: badgeRingPulse 2.5s ease-in-out infinite;
+}
+
+.badge-ring-2 {
+  inset: -14px;
+  border-color: rgba(31, 138, 138, 0.2);
+  animation-delay: 0.5s;
+  animation-duration: 3s;
+}
+
+.badge-ring-3 {
+  inset: -24px;
+  border-color: rgba(31, 138, 138, 0.1);
+  animation-delay: 1s;
+  animation-duration: 3.5s;
+}
+
+.badge-core {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  position: relative;
+  z-index: 2;
+}
+
+.badge-svg {
+  width: 30px;
+  height: 30px;
+  filter: drop-shadow(0 0 6px rgba(62, 214, 160, 0.6));
+}
+
+.badge-label {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 900;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  background: linear-gradient(135deg, #3ED6A0, #7EE7C8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+
+.badge-sublabel {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 6px;
+  letter-spacing: 0.12em;
+  color: rgba(126, 231, 200, 0.5);
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.badge-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(62, 214, 160, 0.2), transparent 70%);
+  pointer-events: none;
+  animation: badgeGlowPulse 3s ease-in-out infinite;
+  filter: blur(8px);
+}
+

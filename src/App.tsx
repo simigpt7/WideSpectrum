@@ -5,106 +5,52 @@ import {
   Instagram, Youtube, Facebook, Star, Menu, X, ExternalLink
 } from 'lucide-react';
 
-// ── Types ──────────────────────────────────────────────────────────────────
-interface Particle {
-  x: number; y: number; vx: number; vy: number;
-  size: number; opacity: number; color: string;
+// ── Video Background ───────────────────────────────────────────────────────
+function VideoBackground() {
+  return (
+    <div className="hero-video-wrapper">
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="hero-video"
+      >
+        <source src="/hero-bg.mp4" type="video/mp4" />
+      </video>
+      {/* Dark overlay so text stays readable */}
+      <div className="hero-video-overlay" />
+    </div>
+  );
 }
 
-// ── Hero Canvas ────────────────────────────────────────────────────────────
-function HeroCanvas() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const particlesRef = useRef<Particle[]>([]);
-  const rafRef = useRef<number>(0);
-  const mouseRef = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d')!;
-    const colors = ['#1F8A8A', '#3ED6A0', '#7EE7C8', '#082F3A'];
-
-    function resize() {
-      canvas!.width = canvas!.offsetWidth;
-      canvas!.height = canvas!.offsetHeight;
-    }
-    resize();
-
-    function spawnParticles() {
-      particlesRef.current = Array.from({ length: 90 }, () => ({
-        x: Math.random() * canvas!.width,
-        y: Math.random() * canvas!.height,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
-        size: Math.random() * 2 + 0.5,
-        opacity: Math.random() * 0.5 + 0.1,
-        color: colors[Math.floor(Math.random() * colors.length)],
-      }));
-    }
-    spawnParticles();
-
-    function draw() {
-      ctx.clearRect(0, 0, canvas!.width, canvas!.height);
-      const pts = particlesRef.current;
-
-      pts.forEach((p, i) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < 0) p.x = canvas!.width;
-        if (p.x > canvas!.width) p.x = 0;
-        if (p.y < 0) p.y = canvas!.height;
-        if (p.y > canvas!.height) p.y = 0;
-
-        // Mouse repulsion
-        const dx = p.x - mouseRef.current.x;
-        const dy = p.y - mouseRef.current.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 100) {
-          p.vx += dx / dist * 0.05;
-          p.vy += dy / dist * 0.05;
-        }
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = p.opacity;
-        ctx.fill();
-
-        // Connect nearby particles
-        for (let j = i + 1; j < pts.length; j++) {
-          const q = pts[j];
-          const d = Math.hypot(p.x - q.x, p.y - q.y);
-          if (d < 100) {
-            ctx.beginPath();
-            ctx.moveTo(p.x, p.y);
-            ctx.lineTo(q.x, q.y);
-            ctx.strokeStyle = '#1F8A8A';
-            ctx.globalAlpha = (1 - d / 100) * 0.15;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
-        }
-        ctx.globalAlpha = 1;
-      });
-      rafRef.current = requestAnimationFrame(draw);
-    }
-    draw();
-
-    const onMouse = (e: MouseEvent) => {
-      const rect = canvas!.getBoundingClientRect();
-      mouseRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    };
-    const onResize = () => { resize(); spawnParticles(); };
-    canvas.addEventListener('mousemove', onMouse);
-    window.addEventListener('resize', onResize);
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-      canvas.removeEventListener('mousemove', onMouse);
-      window.removeEventListener('resize', onResize);
-    };
-  }, []);
-
-  return <canvas ref={canvasRef} id="heroCanvas" />;
+// ── Floating 3D Badge (persistent throughout scroll) ──────────────────────
+function Floating3DBadge() {
+  return (
+    <div className="floating-3d-badge" aria-label="WideSpectrum 3D badge">
+      <div className="badge-3d-inner">
+        <div className="badge-face badge-front">
+          <div className="badge-ring" />
+          <div className="badge-ring badge-ring-2" />
+          <div className="badge-ring badge-ring-3" />
+          <div className="badge-core">
+            <div className="badge-icon-wrap">
+              {/* Vinyl / sound-wave SVG icon */}
+              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="badge-svg">
+                <circle cx="20" cy="20" r="18" stroke="#3ED6A0" strokeWidth="1.5" strokeDasharray="4 2" />
+                <circle cx="20" cy="20" r="12" stroke="#1F8A8A" strokeWidth="1" />
+                <circle cx="20" cy="20" r="3" fill="#3ED6A0" />
+                <path d="M20 8 Q28 14 28 20 Q28 26 20 32 Q12 26 12 20 Q12 14 20 8Z" fill="none" stroke="#7EE7C8" strokeWidth="0.8" opacity="0.6" />
+              </svg>
+            </div>
+            <span className="badge-label">WSP</span>
+            <span className="badge-sublabel">Productions</span>
+          </div>
+        </div>
+      </div>
+      <div className="badge-glow" />
+    </div>
+  );
 }
 
 // ── Wave Equalizer ─────────────────────────────────────────────────────────
@@ -277,6 +223,9 @@ export default function App() {
       {/* Noise overlay */}
       <div className="noise-overlay" />
 
+      {/* ── FLOATING 3D BADGE (persistent) ────────────────────────── */}
+      <Floating3DBadge />
+
       {/* ── NAVBAR ────────────────────────────────────────────────────── */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'nav-blur py-3' : 'py-5'}`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
@@ -340,7 +289,7 @@ export default function App() {
 
       {/* ── HERO ──────────────────────────────────────────────────────── */}
       <section id="home" className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
-        <HeroCanvas />
+        <VideoBackground />
 
         {/* Scanline effect */}
         <div className="hero-scanline" />
