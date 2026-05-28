@@ -327,12 +327,12 @@ export default function App() {
       </nav>
 
       {/* ── HERO ──────────────────────────────────────────────────────── */}
-      <section id="home" className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
+      <section id="home" className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800">
         <HeroCanvas />
         <div className="hero-scanline" />
 
-        <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
-          <h1 className="mb-4" style={{ fontFamily: 'Montserrat, sans-serif', perspective: '800px' }}>
+        <div className="relative z-20 text-center px-6 max-w-5xl mx-auto">
+          <h1 className="mb-4" style={{ fontFamily: 'Montserrat, sans-serif', perspective: '800px', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
             <span className="block text-[clamp(2.2rem,7vw,5.5rem)] font-black leading-none tracking-tighter text-white mb-2">
               <AnimLetters text="Build Your Sound" baseDelay={0.4} />
             </span>
