@@ -220,6 +220,7 @@ export default function App() {
   const [scrolled, setScrolled] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [testimonialIdx, setTestimonialIdx] = useState(0);
+  const [testimonialPaused, setTestimonialPaused] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', service: '', message: '' });
   const [formSent, setFormSent] = useState(false);
   const cursorRef = useRef<HTMLDivElement>(null);
@@ -244,9 +245,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (testimonialPaused) return;
     const id = setInterval(() => setTestimonialIdx(i => (i + 1) % TESTIMONIALS.length), 5000);
     return () => clearInterval(id);
-  }, []);
+  }, [testimonialPaused]);
 
   const scrollTo = useCallback((id: string) => {
     const el = document.getElementById(id);
@@ -254,13 +256,31 @@ export default function App() {
     setNavOpen(false);
   }, []);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const msg = `Hello Wide Spectrum Productions,\n\nI would like to book a free consultation.\nName: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone || 'Not provided'}\nService: ${formData.service}\n\nProject Details: ${formData.message}\n\nPlease get back to me when convenient.`;
-    window.open(`https://wa.me/917708813596?text=${encodeURIComponent(msg)}`, '_blank');
-    setFormSent(true);
-    setFormData({ name: '', email: '', phone: '', service: '', message: '' });
-    setTimeout(() => setFormSent(false), 6000);
+    try {
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-contact-email`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        setFormSent(true);
+        setFormData({ name: '', email: '', phone: '', service: '', message: '' });
+        setTimeout(() => setFormSent(false), 6000);
+      } else {
+        console.error('Failed to send email');
+        alert('Failed to send message. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error sending form:', error);
+      alert('An error occurred. Please try again.');
+    }
   }
 
   const NAV = ['services', 'about', 'portfolio', 'testimonials', 'contact'];
@@ -275,10 +295,9 @@ export default function App() {
       {/* ── NAVBAR ────────────────────────────────────────────────────── */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'nav-blur py-3' : 'py-4'}`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <button onClick={() => scrollTo('home')} className="flex items-center gap-3 group">
-            <WaveEQ bars={4} />
+          <button onClick={() => scrollTo('home')} className="flex items-center gap-2 group">
+            <WaveEQ bars={6} />
             <img src="/logo.png" alt="Wide Spectrum" className={`transition-all duration-300 ${scrolled ? 'h-8' : 'h-10'}`} />
-            <WaveEQ bars={4} />
           </button>
 
           {/* Desktop nav */}
@@ -332,11 +351,11 @@ export default function App() {
         <div className="hero-scanline" />
 
         <div className="relative z-20 text-center px-6 max-w-5xl mx-auto">
-          <h1 className="mb-4" style={{ fontFamily: 'Montserrat, sans-serif', perspective: '800px', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+          <h1 className="mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
             <span className="block text-[clamp(2.2rem,7vw,5.5rem)] font-black leading-none tracking-tighter text-white mb-2">
               <AnimLetters text="Build Your Sound" baseDelay={0.4} />
             </span>
-            <span className="block text-[clamp(2.2rem,7vw,5.5rem)] font-black leading-none tracking-tighter gradient-text animate-glow-pulse mb-2">
+            <span className="block text-[clamp(2.2rem,7vw,5.5rem)] font-black leading-none tracking-tighter text-teal-300 mb-2" style={{ animation: 'none' }}>
               <AnimLetters text="Across the Spectrum" baseDelay={0.9} />
             </span>
           </h1>
@@ -402,11 +421,10 @@ export default function App() {
                     Most Popular
                   </div>
                 )}
-                <div className="service-number mb-2">{svc.num}</div>
-                <div className="w-11 h-11 rounded-lg bg-teal-900/50 flex items-center justify-center mb-4 group-hover:bg-teal-700/50 transition-colors">
-                  <svc.icon size={22} className="text-teal-400" />
+                <div className="w-16 h-16 rounded-lg bg-teal-900/50 flex items-center justify-center mb-6 group-hover:bg-teal-700/50 transition-colors">
+                  <svc.icon size={36} className="text-teal-400" />
                 </div>
-                <h3 className="font-bold text-white mb-2 text-sm tracking-wide">{svc.title}</h3>
+                <h3 className="font-bold text-white mb-2 text-lg tracking-wide">{svc.title}</h3>
                 <p className="text-teal-200/40 text-xs leading-relaxed mb-3">{svc.desc}</p>
                 <ul className="space-y-1 mb-4">
                   {svc.features.map(f => (
@@ -431,9 +449,21 @@ export default function App() {
         <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1/2 h-full opacity-5"
           style={{ background: 'radial-gradient(ellipse at right, #1F8A8A, transparent)', filter: 'blur(80px)' }} />
 
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          {/* Left */}
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+          {/* Left - Images */}
           <div className="reveal-left">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="glass-card rounded-xl overflow-hidden border-0">
+                <img src="/BJ.jpeg" alt="Studio - Benny John" className="w-full h-auto object-cover rounded-lg hover:scale-105 transition-transform duration-300" />
+              </div>
+              <div className="glass-card rounded-xl overflow-hidden border-0">
+                <img src="/BJ2.jpeg" alt="Live Performance" className="w-full h-auto object-cover rounded-lg hover:scale-105 transition-transform duration-300" />
+              </div>
+            </div>
+          </div>
+
+          {/* Right - Text Content */}
+          <div className="reveal-right">
             <span className="text-xs font-bold tracking-[0.3em] text-teal-400 uppercase mb-4 block">About Us</span>
             <h2 className="text-4xl md:text-5xl font-black text-white mb-6 leading-tight" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               Where <span className="gradient-text">Creativity</span><br />Meets Technology
@@ -467,21 +497,9 @@ export default function App() {
                 <ExternalLink size={12} />
               </a>
             </div>
-          </div>
 
-          {/* Right - Images */}
-          <div className="reveal-right">
-            <div className="grid grid-cols-1 gap-4 mb-6">
-              <div className="glass-card rounded-xl overflow-hidden border-0">
-                <img src="/BJ.jpeg" alt="Studio - Benny John" className="w-full h-auto object-cover rounded-lg hover:scale-105 transition-transform duration-300" />
-              </div>
-              <div className="glass-card rounded-xl overflow-hidden border-0">
-                <img src="/BJ2.jpeg" alt="Live Performance" className="w-full h-auto object-cover rounded-lg hover:scale-105 transition-transform duration-300" />
-              </div>
-            </div>
-
-            {/* Features below images */}
-            <div className="space-y-4">
+            {/* Features */}
+            <div className="space-y-4 mt-8">
             {[
               { title: 'World-Class Sound', desc: 'We deliver globally competitive production quality trusted by artists and brands', icon: Headphones },
               { title: 'End-to-End Ecosystem', desc: 'From idea to final master, everything happens seamlessly under one roof.', icon: Trophy },
@@ -585,43 +603,54 @@ export default function App() {
 
       {/* ── TESTIMONIALS ──────────────────────────────────────────────── */}
       <section id="testimonials" className="py-28 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-5"
-          style={{ background: 'radial-gradient(ellipse at center, #1F8A8A, transparent)', filter: 'blur(100px)' }} />
-
-        <div className="max-w-4xl mx-auto relative z-10">
+        <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-16 reveal">
             <span className="text-xs font-bold tracking-[0.3em] text-teal-400 uppercase mb-3 block">Client Reviews</span>
             <h2 className="text-4xl md:text-5xl font-black text-white mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               What <span className="gradient-text">Artists Say</span>
             </h2>
-            <p className="text-teal-200/50">Don't just take our word for it</p>
           </div>
 
-          <div className="reveal">
-            <div className="glass-card p-8 md:p-12 rounded-2xl text-center relative">
-              <div className="flex justify-center mb-6">
-                {[...Array(5)].map((_, i) => <Star key={i} size={18} fill="#3ED6A0" className="text-teal-400" />)}
-              </div>
-              <div className="text-4xl text-teal-600/30 font-serif absolute top-6 left-8">"</div>
-              <p className="text-teal-100/80 text-base md:text-lg leading-relaxed mb-8 relative z-10">
-                {TESTIMONIALS[testimonialIdx].text}
-              </p>
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-700 to-teal-400 flex items-center justify-center mx-auto mb-3 text-white font-bold text-lg">
-                {TESTIMONIALS[testimonialIdx].name[0]}
-              </div>
-              <p className="font-bold text-white">{TESTIMONIALS[testimonialIdx].name}</p>
-              <p className="text-teal-400 text-sm">{TESTIMONIALS[testimonialIdx].role}</p>
-            </div>
-
-            <div className="flex justify-center gap-2 mt-6">
-              {TESTIMONIALS.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setTestimonialIdx(i)}
-                  className={`h-2 rounded-full transition-all duration-300 ${i === testimonialIdx ? 'w-8 bg-teal-400' : 'w-2 bg-teal-800'}`}
-                />
+          <div className="relative overflow-hidden" onMouseEnter={() => setTestimonialPaused(true)} onMouseLeave={() => setTestimonialPaused(false)}>
+            <div
+              className="flex gap-6 transition-transform duration-300"
+              style={{
+                transform: `translateX(calc(-${testimonialIdx * 100}% - ${testimonialIdx * 24}px))`,
+              }}
+            >
+              {[...TESTIMONIALS, ...TESTIMONIALS].map((testimonial, i) => (
+                <div key={i} className="flex-shrink-0 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]">
+                  <div className="glass-card p-8 rounded-2xl text-center relative h-full flex flex-col">
+                    <div className="flex justify-center mb-4">
+                      {[...Array(5)].map((_, j) => <Star key={j} size={16} fill="#3ED6A0" className="text-teal-400" />)}
+                    </div>
+                    <div className="text-3xl text-teal-600/30 font-serif absolute top-4 left-6">"</div>
+                    <p className="text-teal-100/80 text-sm md:text-base leading-relaxed mb-6 relative z-10 flex-grow">
+                      {testimonial.text}
+                    </p>
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-700 to-teal-400 flex items-center justify-center mx-auto mb-3 text-white font-bold">
+                      {testimonial.name[0]}
+                    </div>
+                    <p className="font-bold text-white text-sm">{testimonial.name}</p>
+                    <p className="text-teal-400 text-xs">{testimonial.role}</p>
+                  </div>
+                </div>
               ))}
             </div>
+
+            {/* Scroll gradient masks */}
+            <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-slate-900 to-transparent pointer-events-none z-10" />
+            <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-slate-900 to-transparent pointer-events-none z-10" />
+          </div>
+
+          <div className="flex justify-center gap-2 mt-8">
+            {TESTIMONIALS.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setTestimonialIdx(i)}
+                className={`h-2 rounded-full transition-all duration-300 ${i === testimonialIdx ? 'w-8 bg-teal-400' : 'w-2 bg-teal-800'}`}
+              />
+            ))}
           </div>
         </div>
       </section>
@@ -748,10 +777,6 @@ export default function App() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
               <img src="/logo.png" alt="Wide Spectrum" className="h-8" />
-              <span className="font-black text-sm tracking-wider uppercase" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                <span className="gradient-text">Wide</span>
-                <span className="text-white">Spectrum</span>
-              </span>
             </div>
 
             <div className="flex items-center gap-6 text-xs text-teal-400/40 uppercase tracking-widest">
