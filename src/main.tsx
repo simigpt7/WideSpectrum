@@ -1,19 +1,20 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import App from './App.tsx';
-import './index.css';
-import { initMonitoring } from './lib/monitoring';
-import { initAnalytics } from './lib/analytics';
-import { initUptimeMonitoring } from './lib/uptime';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './styles/index.css';
 
-// Initialise in parallel, non-blocking — none of these affect the render
-initAnalytics();
-initMonitoring();
-initUptimeMonitoring();
+// Initialize Sentry in production
+if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
+  import('./lib/sentry');
+}
 
-// Single root render (was duplicated — now fixed)
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
+// Initialize web vitals tracking
+if (typeof window !== 'undefined') {
+  import('./lib/analytics');
+}
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
     <App />
-  </StrictMode>
+  </React.StrictMode>
 );

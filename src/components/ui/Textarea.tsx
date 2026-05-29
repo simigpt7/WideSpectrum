@@ -1,40 +1,68 @@
-import { forwardRef, type TextareaHTMLAttributes } from 'react';
-import { cn } from '@/utils/cn';
+import React from 'react';
+import { cn } from '../../utils/cn';
 
-export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
-  error?: string;
+interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
+  error?: string;
+  helperText?: string;
+  variant?: 'default' | 'filled';
 }
 
-export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, error, label, id, ...props }, ref) => {
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  (
+    {
+      className,
+      label,
+      error,
+      helperText,
+      variant = 'default',
+      id,
+      rows = 4,
+      ...props
+    },
+    ref
+  ) => {
+    const textareaId = id || label?.toLowerCase().replace(/\s+/g, '-');
+
+    const baseStyles = 'w-full rounded-lg transition-all duration-200 resize-none';
+
+    const variants = {
+      default: 'bg-dark-800/50 border border-white/10 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20',
+      filled: 'bg-dark-800 border border-transparent focus:border-primary-500 focus:bg-dark-700',
+    };
+
+    const errorStyles = error
+      ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+      : '';
+
     return (
       <div className="w-full">
         {label && (
           <label
-            htmlFor={id}
-            className="text-xs text-teal-400/60 uppercase tracking-widest mb-1.5 block"
+            htmlFor={textareaId}
+            className="block text-sm font-medium text-gray-300 mb-2"
           >
             {label}
           </label>
         )}
         <textarea
-          id={id}
+          ref={ref}
+          id={textareaId}
+          rows={rows}
           className={cn(
-            'input-field w-full px-4 py-3 rounded-lg text-sm resize-none',
-            'focus:outline-none focus:ring-2 focus:ring-teal-500/30',
-            error && 'border-red-500 focus:ring-red-500/30',
+            baseStyles,
+            variants[variant],
+            errorStyles,
+            'px-4 py-3 text-white placeholder-gray-500 focus:outline-none',
             className
           )}
-          ref={ref}
-          aria-invalid={!!error}
-          aria-describedby={error ? `${id}-error` : undefined}
           {...props}
         />
         {error && (
-          <p id={`${id}-error`} className="text-red-400 text-xs mt-1 flex items-center gap-1">
-            {error}
-          </p>
+          <p className="mt-2 text-sm text-red-500">{error}</p>
+        )}
+        {helperText && !error && (
+          <p className="mt-2 text-sm text-gray-500">{helperText}</p>
         )}
       </div>
     );
@@ -42,3 +70,5 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
 );
 
 Textarea.displayName = 'Textarea';
+
+export default Textarea;

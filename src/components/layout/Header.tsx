@@ -1,126 +1,134 @@
-import { useState, forwardRef } from 'react';
-import { Menu, X } from 'lucide-react';
-import { Button } from '@/components/ui';
-import { WaveEQ } from '@/components/features/WaveEQ';
-import type { NavItem } from '@/types';
+import { useState, useEffect } from 'react';
+import { Menu, X, Music } from 'lucide-react';
+import { cn } from '../../utils/cn';
+import Container from '../ui/Container';
+import Button from '../ui/Button';
 
-const NAV_ITEMS: NavItem[] = ['services', 'about', 'portfolio', 'testimonials', 'contact'];
+const navLinks = [
+  { href: '#services', label: 'Services' },
+  { href: '#about', label: 'About' },
+  { href: '#portfolio', label: 'Portfolio' },
+  { href: '#testimonials', label: 'Testimonials' },
+  { href: '#contact', label: 'Contact' },
+];
 
-interface HeaderProps {
-  scrollTo: (id: string) => void;
-  // Legacy prop kept for any direct usages — ignored when ref-controlled
-  scrolled?: boolean;
-}
+const Header = () => {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-/**
- * Header is forwardRef so App can pass a ref for direct DOM attribute mutation.
- * The [data-scrolled="true"] CSS selector drives all scroll-dependent styles,
- * meaning zero React re-renders happen on scroll (no state, no prop drilling).
- */
-export const Header = forwardRef<HTMLDivElement, HeaderProps>(function Header({ scrollTo }, ref) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleNavClick = (href: string) => {
+    setIsMobileMenuOpen(false);
+    const element = document.querySelector(href);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   return (
-    <nav
-      ref={ref}
-      className="fixed top-0 left-0 right-0 z-50 wsp-header"
-      data-scrolled="false"
+    <header
+      className={cn(
+        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
+        isScrolled
+          ? 'bg-dark-950/95 backdrop-blur-lg shadow-lg'
+          : 'bg-transparent'
+      )}
     >
-      <style>{`
-        .wsp-header {
-          padding-top: 1rem;
-          padding-bottom: 1rem;
-          background: transparent;
-          border-bottom: none;
-          transition: padding 500ms ease, background 500ms ease, border-color 500ms ease;
-        }
-        .wsp-header[data-scrolled="true"] {
-          padding-top: 0.75rem;
-          padding-bottom: 0.75rem;
-          background: rgba(3, 10, 14, 0.92);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
-          border-bottom: 1px solid rgba(31, 138, 138, 0.15);
-        }
-        .wsp-logo {
-          height: 2.5rem;
-          transition: height 300ms ease;
-        }
-        .wsp-header[data-scrolled="true"] .wsp-logo {
-          height: 2rem;
-        }
-      `}</style>
-
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        <button
-          onClick={() => scrollTo('home')}
-          className="flex items-center gap-3 group"
-          aria-label="Go to home"
-        >
-          <WaveEQ bars={6} />
-          <img
-            src="/logo.png"
-            alt="Wide Spectrum Productions"
-            className="wsp-logo"
-          />
-        </button>
-
-        {/* Desktop Navigation */}
-        <ul className="hidden md:flex items-center gap-8">
-          {NAV_ITEMS.map((item) => (
-            <li key={item}>
-              <button
-                onClick={() => scrollTo(item)}
-                className="text-sm font-medium uppercase tracking-widest text-teal-300/70 hover:text-teal-300 transition-colors duration-200 relative group"
-              >
-                {item}
-                <span className="absolute -bottom-1 left-0 w-0 h-px bg-gradient-to-r from-teal-400 to-aqua transition-all duration-300 group-hover:w-full" />
-              </button>
-            </li>
-          ))}
-          <li>
-            <Button onClick={() => scrollTo('contact')} variant="primary" size="sm">
-              Book a Free Consultation
-            </Button>
-          </li>
-        </ul>
-
-        {/* Mobile Menu Toggle */}
-        <button
-          className="md:hidden text-teal-300 p-2 rounded-lg hover:bg-teal-900/30 transition-colors"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-          aria-expanded={mobileOpen}
-        >
-          {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
-
-      {/* Mobile Menu */}
-      <div
-        className={`md:hidden transition-all duration-300 overflow-hidden ${
-          mobileOpen ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'
-        }`}
-      >
-        <div className="px-6 pb-6 pt-4 flex flex-col gap-4" style={{ background: 'rgba(3, 10, 14, 0.95)' }}>
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item}
-              onClick={() => { scrollTo(item); setMobileOpen(false); }}
-              className="text-left text-sm font-medium uppercase tracking-widest text-teal-300/70 hover:text-teal-300 transition-colors py-2"
-            >
-              {item}
-            </button>
-          ))}
-          <Button
-            onClick={() => { scrollTo('contact'); setMobileOpen(false); }}
-            variant="primary"
-            className="text-center"
+      <Container>
+        <nav className="flex items-center justify-between h-16 md:h-20">
+          {/* Logo */}
+          <a
+            href="#"
+            className="flex items-center gap-2 text-white font-bold text-xl group"
+            onClick={(e) => {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           >
-            Book a Free Consultation
-          </Button>
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <Music className="h-5 w-5 text-white" />
+            </div>
+            <span className="hidden sm:inline">
+              <span className="gradient-text">Wide Spectrum</span>
+            </span>
+          </a>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-8">
+            {navLinks.map((link) => (
+              <button
+                key={link.href}
+                onClick={() => handleNavClick(link.href)}
+                className="text-gray-300 hover:text-white font-medium transition-colors duration-200 hover:gradient-text"
+              >
+                {link.label}
+              </button>
+            ))}
+          </div>
+
+          {/* CTA Button - Desktop */}
+          <div className="hidden md:block">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => handleNavClick('#contact')}
+            >
+              Get in Touch
+            </Button>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden text-white p-2"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+          >
+            {isMobileMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </button>
+        </nav>
+
+        {/* Mobile Menu */}
+        <div
+          className={cn(
+            'md:hidden transition-all duration-300 overflow-hidden',
+            isMobileMenuOpen ? 'max-h-96 pb-6' : 'max-h-0'
+          )}
+        >
+          <div className="flex flex-col gap-4 pt-4 border-t border-white/10">
+            {navLinks.map((link) => (
+              <button
+                key={link.href}
+                onClick={() => handleNavClick(link.href)}
+                className="text-gray-300 hover:text-white font-medium text-left py-2 transition-colors duration-200"
+              >
+                {link.label}
+              </button>
+            ))}
+            <Button
+              variant="primary"
+              size="sm"
+              className="mt-2 w-full"
+              onClick={() => handleNavClick('#contact')}
+            >
+              Get in Touch
+            </Button>
+          </div>
         </div>
-      </div>
-    </nav>
+      </Container>
+    </header>
   );
-});
+};
+
+export default Header;

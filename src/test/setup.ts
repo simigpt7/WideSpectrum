@@ -1,16 +1,1 @@
-import '@testing-library/react';
-
-// Mock matchMedia for hook tests
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: (query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: () => {},
-    removeListener: () => {},
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    dispatchEvent: () => false,
-  }),
-});
+import '@testing-library/jest-dom';

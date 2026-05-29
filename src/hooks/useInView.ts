@@ -1,34 +1,43 @@
-import { useState, useEffect, useCallback, type RefCallback } from 'react';
+import { useState, useEffect, useRef, RefObject } from 'react';
 
-/**
- * Hook to detect if an element is in the viewport
- * Uses Intersection Observer API for better performance
- */
-export function useInView<T extends HTMLElement = HTMLDivElement>(
-  threshold = 0.1
-): [RefCallback<T>, boolean] {
-  const [element, setElement] = useState<T | null>(null);
+interface UseInViewOptions {
+  threshold?: number;
+  rootMargin?: string;
+  triggerOnce?: boolean;
+}
+
+const useInView = <T extends HTMLElement = HTMLElement>(
+  options: UseInViewOptions = {}
+): { ref: RefObject<T>; isInView: boolean } => {
+  const { threshold = 0, rootMargin = '0px', triggerOnce = false } = options;
   const [isInView, setIsInView] = useState(false);
-
-  const refCallback = useCallback((node: T | null) => {
-    setElement(node);
-  }, []);
+  const ref = useRef<T>(null);
 
   useEffect(() => {
+    const element = ref.current;
     if (!element) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsInView(true);
+        const inView = entry.isIntersecting;
+
+        if (inView || !triggerOnce) {
+          setIsInView(inView);
+        }
+
+        if (inView && triggerOnce) {
+          observer.disconnect();
         }
       },
-      { threshold, rootMargin: '-50px' }
+      { threshold, rootMargin }
     );
 
     observer.observe(element);
-    return () => observer.disconnect();
-  }, [element, threshold]);
 
-  return [refCallback, isInView];
-}
+    return () => observer.disconnect();
+  }, [threshold, rootMargin, triggerOnce]);
+
+  return { ref, isInView };
+};
+
+export default useInView;

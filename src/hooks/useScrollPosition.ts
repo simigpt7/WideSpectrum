@@ -1,41 +1,47 @@
-import { useState, useEffect, useRef } from 'react';
-import type { ScrollState } from '@/types';
+import { useState, useEffect } from 'react';
 
-/**
- * Throttled scroll position hook.
- * Reads scroll state on rAF cadence (~60fps) instead of every scroll event.
- * This prevents excessive React re-renders and keeps the main thread free.
- */
-export function useScrollPosition(): ScrollState {
-  const [scroll, setScroll] = useState<ScrollState>({ y: 0, progress: 0, direction: null });
-  const lastY = useRef(0);
-  const rafPending = useRef(false);
+interface ScrollPosition {
+  x: number;
+  y: number;
+  direction: 'up' | 'down' | null;
+  progress: number;
+}
+
+const useScrollPosition = (): ScrollPosition => {
+  const [scrollPosition, setScrollPosition] = useState<ScrollPosition>({
+    x: 0,
+    y: 0,
+    direction: null,
+    progress: 0,
+  });
 
   useEffect(() => {
-    const update = () => {
-      rafPending.current = false;
-      const y = window.scrollY;
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = maxScroll > 0 ? y / maxScroll : 0;
-      const direction = y > lastY.current ? 'down' : y < lastY.current ? 'up' : null;
-      lastY.current = y;
-      setScroll(prev => {
-        // Bail out if nothing meaningful changed (avoids unnecessary re-renders)
-        if (Math.abs(prev.y - y) < 1) return prev;
-        return { y, progress, direction };
-      });
-    };
+    let previousY = window.scrollY;
 
     const handleScroll = () => {
-      if (!rafPending.current) {
-        rafPending.current = true;
-        requestAnimationFrame(update);
-      }
+      const currentY = window.scrollY;
+      const currentX = window.scrollX;
+      const direction = currentY > previousY ? 'down' : currentY < previousY ? 'up' : null;
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = maxScroll > 0 ? (currentY / maxScroll) * 100 : 0;
+
+      setScrollPosition({
+        x: currentX,
+        y: currentY,
+        direction,
+        progress,
+      });
+
+      previousY = currentY;
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // Initial call
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  return scroll;
-}
+  return scrollPosition;
+};
+
+export default useScrollPosition;

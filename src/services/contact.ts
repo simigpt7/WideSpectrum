@@ -1,62 +1,109 @@
-import { sanitizeInput, sanitizeEmail, sanitizePhone, generateCSRFToken } from '@/utils/sanitize';
-import type { FormState } from '@/types';
+import { supabase, TABLES, ContactSubmission } from '../lib/supabase';
+import { ContactFormData } from '../types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+export const submitContactForm = async (data: ContactFormData): Promise<ContactSubmission> => {
+  // If Supabase is configured, use it
+  if (import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY) {
+    try {
+      const { data: result, error } = await supabase
+        .from(TABLES.CONTACT_SUBMISSIONS)
+        .insert({
+          name: data.name,
+          email: data.email,
+          phone: data.phone || null,
+          service: data.service || null,
+          message: data.message,
+          status: 'new',
+        })
+        .select()
+        .single();
 
-export interface ContactResponse {
-  success: boolean;
-  message?: string;
-  error?: string;
-}
+      if (error) throw error;
 
-/**
- * Send contact form data to the Supabase Edge Function
- */
-export async function sendContactEmail(formData: FormState): Promise<ContactResponse> {
-  const csrfToken = generateCSRFToken();
+      // Additionally trigger edge function for email notification
+      await sendNotificationEmail(data);
 
-  // Sanitize all inputs before sending
-  const sanitizedData: FormState = {
-    name: sanitizeInput(formData.name),
-    email: sanitizeEmail(formData.email),
-    phone: sanitizePhone(formData.phone),
-    service: sanitizeInput(formData.service),
-    message: sanitizeInput(formData.message),
-  };
-
-  try {
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/send-contact-email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        'X-CSRF-Token': csrfToken,
-      },
-      body: JSON.stringify({
-        ...sanitizedData,
-        _csrf: csrfToken,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return {
-        success: false,
-        error: data.message || 'Failed to send message',
-      };
+      return result;
+    } catch (error) {
+      console.error('Supabase submission error:', error);
+      throw new Error('Failed to submit form. Please try again later.');
     }
+  }
 
+  // Fallback: Just send notification email
+  try {
+    await sendNotificationEmail(data);
     return {
-      success: true,
-      message: data.message || 'Message sent successfully',
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      service: data.service,
+      message: data.message,
     };
   } catch (error) {
-    console.error('Contact form error:', error);
-    return {
-      success: false,
-      error: 'An unexpected error occurred. Please try again.',
-    };
+    console.error('Email notification error:', error);
+    throw new Error('Failed to submit form. Please try again later.');
   }
-}
+};
+
+const sendNotificationEmail = async (data: ContactFormData) => {
+  const functionName = 'send-contact-email';
+
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${functionName}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          service: data.service,
+          message: data.message,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to send notification');
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Edge function error:', error);
+    // Don't throw - we still want to succeed even if email fails
+    // The data is already saved in Supabase
+  }
+};
+
+// Fetch all contact submissions (admin use)
+export const fetchContactSubmissions = async (): Promise<ContactSubmission[]> => {
+  const { data, error } = await supabase
+    .from(TABLES.CONTACT_SUBMISSIONS)
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+};
+
+// Update submission status (admin use)
+export const updateSubmissionStatus = async (
+  id: string,
+  status: ContactSubmission['status']
+): Promise<ContactSubmission> => {
+  const { data, error } = await supabase
+    .from(TABLES.CONTACT_SUBMISSIONS)
+    .update({ status })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};

@@ -1,63 +1,59 @@
-// ── Particle Types ────────────────────────────────────────────────────────────
-export interface Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  size: number;
-  opacity: number;
-  color: string;
-  type: 'circle' | 'star' | 'line';
-  glow?: boolean;
-  angle?: number;
-}
-
-// ── Scroll Types ──────────────────────────────────────────────────────────────
-export interface ScrollState {
-  y: number;
-  progress: number;
-  direction: 'up' | 'down' | null;
-}
-
-// ── Form Types ───────────────────────────────────────────────────────────────
-export interface FormState {
+export interface ContactFormData {
   name: string;
   email: string;
-  phone: string;
-  service: string;
+  phone?: string;
+  service?: string;
   message: string;
 }
 
-export interface FormErrors {
-  name?: string;
-  email?: string;
-  service?: string;
-  message?: string;
-}
-
-// ── Service Types ───────────────────────────────────────────────────────────
 export interface Service {
-  icon: React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>;
-  title: string;
-  desc: string;
-  features: string[];
-  featured?: boolean;
-  num: string;
-}
-
-// ── Video Types ─────────────────────────────────────────────────────────────
-export interface Video {
   id: string;
   title: string;
-  artist: string;
+  description: string;
+  icon: string;
+  features: string[];
 }
 
-// ── Testimonial Types ────────────────────────────────────────────────────────
+export interface PortfolioVideo {
+  id: string;
+  youtubeId: string;
+  title: string;
+  artist: string;
+  description: string;
+  year: number;
+  tags: string[];
+}
+
 export interface Testimonial {
-  text: string;
+  id: string;
   name: string;
   role: string;
+  company?: string;
+  quote: string;
+  image?: string;
+  rating: number;
 }
 
-// ── Nav Types ───────────────────────────────────────────────────────────────
-export type NavItem = 'services' | 'about' | 'portfolio' | 'testimonials' | 'contact';
+export interface CompanyInfo {
+  name: string;
+  tagline: string;
+  description: string;
+  email: string;
+  location: string;
+  foundedYear: number;
+  collaborators: string[];
+  socialLinks: {
+    youtube: string;
+    instagram: string;
+    linkedin: string;
+    twitter: string;
+  };
+}
+
+export interface ValidationRule {
+  required?: boolean;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: RegExp;
+  message: string;
+}

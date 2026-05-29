@@ -1,47 +1,65 @@
 /**
  * Sanitize user input to prevent XSS attacks
- * Removes potential HTML tags, javascript: protocol, and event handlers
- * Limits input length to prevent overflow
  */
-export function sanitizeInput(input: string): string {
+export const sanitizeInput = (input: string): string => {
   return input
-    .replace(/[<>]/g, '') // Remove potential HTML tags
-    .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/on\w+=/gi, '') // Remove event handlers
-    .trim()
-    .slice(0, 2000); // Limit length
-}
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;')
+    .trim();
+};
+
+/**
+ * Sanitize HTML content
+ */
+export const sanitizeHTML = (html: string): string => {
+  const div = document.createElement('div');
+  div.textContent = html;
+  return div.innerHTML;
+};
 
 /**
  * Sanitize email address
- * Converts to lowercase and removes invalid characters
  */
-export function sanitizeEmail(email: string): string {
-  return email.toLowerCase().trim().replace(/[^a-z0-9@._+-]/g, '');
-}
+export const sanitizeEmail = (email: string): string => {
+  const sanitized = email.toLowerCase().trim();
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(sanitized)) {
+    return '';
+  }
+  return sanitized;
+};
 
 /**
  * Sanitize phone number
- * Removes all characters except digits, +, -, spaces, and parentheses
  */
-export function sanitizePhone(phone: string): string {
-  return phone.replace(/[^0-9+\-\s()]/g, '').trim();
-}
+export const sanitizePhone = (phone: string): string => {
+  // Remove all non-numeric characters except + and spaces
+  return phone.replace(/[^0-9+\s]/g, '').trim();
+};
 
 /**
- * Validate email format
+ * Sanitize URL
  */
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email) && email.length <= 254;
-}
+export const sanitizeURL = (url: string): string => {
+  try {
+    const parsedURL = new URL(url);
+    // Only allow http and https protocols
+    if (parsedURL.protocol !== 'http:' && parsedURL.protocol !== 'https:') {
+      return '';
+    }
+    return parsedURL.toString();
+  } catch {
+    return '';
+  }
+};
 
 /**
- * Generate CSRF token
- * Uses cryptographically secure random values
+ * Escape special characters for regex
  */
-export function generateCSRFToken(): string {
-  const array = new Uint8Array(32);
-  crypto.getRandomValues(array);
-  return Array.from(array, (b) => b.toString(16).padStart(2, '0')).join('');
-}
+export const escapeRegExp = (string: string): string => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};

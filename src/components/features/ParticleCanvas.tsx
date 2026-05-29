@@ -1,217 +1,128 @@
-import { useEffect, useRef } from 'react';
-import { useMediaQuery, useReducedMotion } from '@/hooks';
-import { COLORS } from '@/constants';
-import type { Particle } from '@/types';
+import { useEffect, useRef, useCallback } from 'react';
+import useReducedMotion from '../../hooks/useReducedMotion';
 
-/**
- * ParticleCanvas — heavily optimised version.
- *
- * Key changes vs. original:
- *  1. shadowBlur removed from every particle — shadowBlur triggers an expensive
- *     off-screen compositing pass. Glow is faked cheaply with a second circle
- *     using globalAlpha instead.
- *  2. Connection drawing moved into a single ctx.beginPath() batch per frame,
- *     instead of one beginPath per pair (O(n²) state changes).
- *  3. Particle count capped more aggressively on mobile (30) and mid-tier (80).
- *  4. ctx.save/restore removed — they flush the render pipeline; we reset
- *     individual properties directly instead.
- *  5. Mouse repulsion uses squared distance check before sqrt — avoids sqrt
- *     for the majority of particles that are far away.
- *  6. Canvas pointer-events stay 'none' (unchanged) so it never blocks scroll.
- *  7. ResizeObserver replaces window resize listener for accuracy.
- */
-export function ParticleCanvas() {
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  opacity: number;
+}
+
+const ParticleCanvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
-  const rafRef = useRef<number>(0);
-  const mouseRef = useRef({ x: -9999, y: -9999 });
-  const isMobile = useMediaQuery('(hover: none) and (pointer: coarse)');
-  const reducedMotion = useReducedMotion();
+  const animationRef = useRef<number>();
+  const prefersReducedMotion = useReducedMotion();
+
+  const initParticles = useCallback((width: number, height: number) => {
+    const particles: Particle[] = [];
+    const particleCount = Math.min(50, Math.floor((width * height) / 15000));
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        radius: Math.random() * 2 + 1,
+        opacity: Math.random() * 0.5 + 0.2,
+      });
+    }
+
+    particlesRef.current = particles;
+  }, []);
 
   useEffect(() => {
-    if (reducedMotion) return;
-
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d', { alpha: true })!;
-    // Cap DPR at 2 — above that you're drawing 9× the pixels for imperceptible quality gain
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-    let logicalW = 0;
-    let logicalH = 0;
-
-    const resize = () => {
-      const rect = canvas.getBoundingClientRect();
-      logicalW = rect.width;
-      logicalH = rect.height;
-      canvas.width = logicalW * dpr;
-      canvas.height = logicalH * dpr;
-      ctx.scale(dpr, dpr);
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      initParticles(canvas.width, canvas.height);
     };
 
-    resize();
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
-    // Fewer particles = fewer draw calls = more headroom for 60fps scroll
-    const particleCount = isMobile ? 30 : 80;
-    const colors = [COLORS.teal, COLORS.aqua, COLORS.tealLight, COLORS.chrome];
-
-    const mkParticle = (): Particle => ({
-      x: Math.random() * logicalW,
-      y: Math.random() * logicalH,
-      vx: (Math.random() - 0.5) * 0.35,
-      vy: (Math.random() - 0.5) * 0.35,
-      size: Math.random() * 2 + 0.5,
-      opacity: Math.random() * 0.5 + 0.1,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      type: Math.random() > 0.85 ? 'star' : 'circle',
-      glow: Math.random() > 0.7,
-      angle: Math.random() * Math.PI * 2,
-    });
-
-    particlesRef.current = Array.from({ length: particleCount }, mkParticle);
-
-    // Cheap 4-point star — no trig per spike, just 4 lines
-    const drawStar = (x: number, y: number, r: number) => {
-      ctx.beginPath();
-      ctx.moveTo(x, y - r * 2);
-      ctx.lineTo(x + r * 0.4, y - r * 0.4);
-      ctx.lineTo(x + r * 2, y);
-      ctx.lineTo(x + r * 0.4, y + r * 0.4);
-      ctx.lineTo(x, y + r * 2);
-      ctx.lineTo(x - r * 0.4, y + r * 0.4);
-      ctx.lineTo(x - r * 2, y);
-      ctx.lineTo(x - r * 0.4, y - r * 0.4);
-      ctx.closePath();
-    };
-
-    const CONNECT_DIST_SQ = 90 * 90; // squared — avoids sqrt for most pairs
+    if (prefersReducedMotion) {
+      // Static particles for reduced motion preference
+      ctx.fillStyle = '#0c4a6e';
+      particlesRef.current.forEach((particle) => {
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(168, 85, 247, ${particle.opacity})`;
+        ctx.fill();
+      });
+      return () => {
+        window.removeEventListener('resize', resizeCanvas);
+      };
+    }
 
     const animate = () => {
-      ctx.clearRect(0, 0, logicalW, logicalH);
+      if (!canvas || !ctx) return;
 
-      const pts = particlesRef.current;
-      const mx = mouseRef.current.x;
-      const my = mouseRef.current.y;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // ── Update + draw particles ──────────────────────────────────────────
-      for (let i = 0; i < pts.length; i++) {
-        const p = pts[i];
+      particlesRef.current.forEach((particle) => {
+        // Update position
+        particle.x += particle.vx;
+        particle.y += particle.vy;
 
-        // Physics
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < -10) p.x = logicalW + 10;
-        else if (p.x > logicalW + 10) p.x = -10;
-        if (p.y < -10) p.y = logicalH + 10;
-        else if (p.y > logicalH + 10) p.y = -10;
+        // Bounce off edges
+        if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
+        if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
 
-        // Mouse repulsion — squared check first
-        const dxM = p.x - mx;
-        const dyM = p.y - my;
-        const distSqM = dxM * dxM + dyM * dyM;
-        if (distSqM < 80 * 80 && distSqM > 0) {
-          const dist = Math.sqrt(distSqM);
-          const force = (80 - dist) / 80;
-          p.vx += (dxM / dist) * force * 0.12;
-          p.vy += (dyM / dist) * force * 0.12;
-        }
+        // Draw particle
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(168, 85, 247, ${particle.opacity})`;
+        ctx.fill();
+      });
 
-        // Dampen velocity
-        p.vx *= 0.99;
-        p.vy *= 0.99;
+      // Draw connections
+      particlesRef.current.forEach((p1, i) => {
+        particlesRef.current.slice(i + 1).forEach((p2) => {
+          const dx = p1.x - p2.x;
+          const dy = p1.y - p2.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
 
-        // Draw — no shadowBlur (expensive). Fake glow with a cheap outer circle.
-        ctx.globalAlpha = p.opacity;
-        ctx.fillStyle = p.color;
-
-        if (p.glow) {
-          // Inner halo: slightly larger, lower alpha
-          ctx.globalAlpha = p.opacity * 0.25;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.globalAlpha = p.opacity;
-        }
-
-        if (p.type === 'star') {
-          drawStar(p.x, p.y, p.size);
-          ctx.fill();
-        } else {
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-
-      // ── Draw connections in one batched path ────────────────────────────
-      // Setting strokeStyle once and batching all connection lines into a
-      // single path is ~5× faster than one path per connection pair.
-      ctx.strokeStyle = COLORS.teal;
-      ctx.lineWidth = 0.5;
-
-      for (let i = 0; i < pts.length; i++) {
-        const p = pts[i];
-        for (let j = i + 1; j < pts.length; j++) {
-          const q = pts[j];
-          const dx = p.x - q.x;
-          const dy = p.y - q.y;
-          const dSq = dx * dx + dy * dy;
-          if (dSq < CONNECT_DIST_SQ) {
-            const alpha = (1 - dSq / CONNECT_DIST_SQ) * 0.07;
-            ctx.globalAlpha = alpha;
+          if (distance < 150) {
             ctx.beginPath();
-            ctx.moveTo(p.x, p.y);
-            ctx.lineTo(q.x, q.y);
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = `rgba(168, 85, 247, ${0.1 * (1 - distance / 150)})`;
+            ctx.lineWidth = 0.5;
             ctx.stroke();
           }
-        }
-      }
+        });
+      });
 
-      ctx.globalAlpha = 1;
-      rafRef.current = requestAnimationFrame(animate);
+      animationRef.current = requestAnimationFrame(animate);
     };
 
     animate();
 
-    // Mouse/touch tracking
-    const onMouseMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      mouseRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    };
-    const onMouseLeave = () => { mouseRef.current = { x: -9999, y: -9999 }; };
-    const onTouchMove = (e: TouchEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const t = e.touches[0];
-      if (t) mouseRef.current = { x: t.clientX - rect.left, y: t.clientY - rect.top };
-    };
-
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseleave', onMouseLeave);
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
-
-    // ResizeObserver is more accurate than window resize (handles CSS changes)
-    const ro = new ResizeObserver(() => {
-      resize();
-      particlesRef.current = Array.from({ length: particleCount }, mkParticle);
-    });
-    ro.observe(canvas);
-
     return () => {
-      cancelAnimationFrame(rafRef.current);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseleave', onMouseLeave);
-      window.removeEventListener('touchmove', onTouchMove);
-      ro.disconnect();
+      window.removeEventListener('resize', resizeCanvas);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
     };
-  }, [isMobile, reducedMotion]);
+  }, [initParticles, prefersReducedMotion]);
 
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 w-full h-full"
-      style={{ zIndex: 5, pointerEvents: 'none' }}
+      className="absolute inset-0 pointer-events-none"
       aria-hidden="true"
     />
   );
-}
+};
+
+export default ParticleCanvas;
