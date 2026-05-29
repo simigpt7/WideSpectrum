@@ -1,16 +1,15 @@
-import React from 'react';
-import { cn } from '../../utils/cn';
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { cn } from '@/utils/cn';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'outline';
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
-  children: React.ReactNode;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       className,
@@ -25,19 +24,21 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 disabled:opacity-50 disabled:cursor-not-allowed';
+    const baseStyles =
+      'relative inline-flex items-center justify-center gap-2 font-semibold transition-all duration-300 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:opacity-70 disabled:cursor-not-allowed';
 
     const variants = {
-      primary: 'bg-gradient-to-r from-primary-600 to-primary-500 text-white hover:from-primary-500 hover:to-primary-400 focus:ring-primary-500 shadow-lg hover:shadow-xl hover:shadow-primary-500/25',
-      secondary: 'bg-dark-800 text-white border border-white/20 hover:bg-dark-700 hover:border-white/30 focus:ring-white/20',
-      ghost: 'text-gray-300 hover:text-white hover:bg-white/5 focus:ring-white/10',
-      outline: 'bg-transparent border-2 border-primary-500 text-primary-500 hover:bg-primary-500/10 focus:ring-primary-500',
+      primary:
+        'btn-primary text-white shadow-lg shadow-teal-900/20 hover:shadow-xl hover:shadow-teal-500/30',
+      outline:
+        'btn-outline text-teal-300 border-teal-700 hover:border-teal-500 hover:bg-teal-900/20',
+      ghost: 'text-teal-300 hover:bg-teal-900/20',
     };
 
     const sizes = {
-      sm: 'px-4 py-2 text-sm gap-2',
-      md: 'px-6 py-3 text-base gap-2',
-      lg: 'px-8 py-4 text-lg gap-3',
+      sm: 'px-4 py-2 text-sm',
+      md: 'px-6 py-3 text-sm',
+      lg: 'px-8 py-4 text-base',
     };
 
     return (
@@ -49,7 +50,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {isLoading ? (
           <svg
-            className="animate-spin h-5 w-5"
+            className="animate-spin h-4 w-4"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -65,14 +66,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             <path
               className="opacity-75"
               fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 2.199.721 4.23 1.94 5.86l2.06-2.569z"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
         ) : (
           <>
-            {leftIcon && <span className="flex-shrink-0">{leftIcon}</span>}
-            {children}
-            {rightIcon && <span className="flex-shrink-0">{rightIcon}</span>}
+            {leftIcon}
+            <span className="relative z-10">{children}</span>
+            {rightIcon}
           </>
         )}
       </button>
@@ -81,5 +82,3 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = 'Button';
-
-export default Button;

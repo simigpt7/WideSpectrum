@@ -1,27 +1,33 @@
-import { COMPANY_INFO } from '../../constants/company';
+import { memo } from 'react';
+import { useReducedMotion } from '@/hooks';
+import { MARQUEE_ITEMS } from '@/constants';
 
-const MarqueeSection = () => {
-  const collaborators = [...COMPANY_INFO.collaborators, ...COMPANY_INFO.collaborators];
+export const MarqueeSection = memo(function MarqueeSection() {
+  const items = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS];
+  const reducedMotion = useReducedMotion();
 
   return (
-    <section className="py-8 md:py-12 bg-dark-900 border-y border-white/5 overflow-hidden">
-      <div className="marquee-container">
-        <div className="marquee-content">
-          {collaborators.map((collaborator, index) => (
-            <div
-              key={`${collaborator}-${index}`}
-              className="flex items-center gap-2 px-6 text-gray-400 whitespace-nowrap"
-            >
-              <span className="text-lg md:text-xl font-medium hover:text-white transition-colors duration-300 cursor-default">
-                {collaborator}
-              </span>
-              <span className="text-primary-500 text-2xl">&bull;</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
+    <div className="overflow-hidden border-y border-teal-900/30 py-5 bg-gradient-to-r from-teal-950/50 via-dark-surface to-teal-950/50 relative">
+      {/* Chrome accent lines */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-teal-400/30 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
 
-export default MarqueeSection;
+      <div
+        className="flex whitespace-nowrap"
+        style={{
+          animation: reducedMotion ? 'none' : 'marqueeLeft 40s linear linear infinite',
+        }}
+      >
+        {items.map((item, i) => (
+          <span
+            key={i}
+            className="mx-8 text-sm font-semibold tracking-[0.25em] text-teal-400/60 uppercase flex items-center gap-6"
+          >
+            {item}
+            <span className="text-gold/40 text-xs">&#9830;</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+});

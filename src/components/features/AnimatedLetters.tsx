@@ -1,52 +1,41 @@
-import React, { useEffect, useState } from 'react';
-import { cn } from '../../utils/cn';
-import useReducedMotion from '../../hooks/useReducedMotion';
+import { memo } from 'react';
+import { useReducedMotion } from '@/hooks';
 
 interface AnimatedLettersProps {
   text: string;
+  baseDelay?: number;
   className?: string;
 }
 
-const AnimatedLetters: React.FC<AnimatedLettersProps> = ({ text, className }) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const prefersReducedMotion = useReducedMotion();
+export const AnimatedLetters = memo(function AnimatedLetters({
+  text,
+  baseDelay = 0,
+  className = '',
+}: AnimatedLettersProps) {
+  const reducedMotion = useReducedMotion();
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 100);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const letters = text.split('');
-
-  if (prefersReducedMotion) {
-    return (
-      <h1 className={cn('text-hero font-display font-bold text-white', className)}>
-        {text}
-      </h1>
-    );
+  if (reducedMotion) {
+    return <span className={className}>{text}</span>;
   }
 
   return (
-    <h1 className={cn('text-hero font-display font-bold', className)}>
-      {letters.map((letter, index) => (
+    <span
+      className={`inline-block overflow-hidden ${className}`}
+      style={{ perspective: 800 }}
+    >
+      {text.split('').map((ch, i) => (
         <span
-          key={`${letter}-${index}`}
-          className={cn(
-            'inline-block transition-all duration-500',
-            letter === ' ' ? 'w-4' : '',
-            isVisible
-              ? 'opacity-100 translate-y-0 text-white'
-              : 'opacity-0 translate-y-8'
-          )}
+          key={i}
+          className="inline-block"
           style={{
-            transitionDelay: `${index * 50}ms`,
+            animation: 'letterReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) both',
+            animationDelay: `${baseDelay + i * 0.035}s`,
+            transformOrigin: 'center bottom',
           }}
         >
-          {letter === ' ' ? '\u00A0' : letter}
+          {ch === ' ' ? '\u00A0' : ch}
         </span>
       ))}
-    </h1>
+    </span>
   );
-};
-
-export default AnimatedLetters;
+});

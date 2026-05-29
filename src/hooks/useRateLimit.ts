@@ -1,47 +1,31 @@
 import { useRef, useCallback } from 'react';
 
-interface UseRateLimitOptions {
+interface RateLimitConfig {
   maxRequests: number;
   windowMs: number;
 }
 
-const useRateLimit = (options: UseRateLimitOptions) => {
-  const { maxRequests, windowMs } = options;
-  const requestsRef = useRef<number[]>([]);
+/**
+ * Hook to implement rate limiting for form submissions
+ * Prevents spam and abuse
+ */
+export function useRateLimit({ maxRequests, windowMs }: RateLimitConfig) {
+  const submissionsRef = useRef<number[]>([]);
 
-  const checkRateLimit = useCallback((): boolean => {
+  const check = useCallback((): boolean => {
     const now = Date.now();
-    requestsRef.current = requestsRef.current.filter(
-      (timestamp) => now - timestamp < windowMs
-    );
-
-    if (requestsRef.current.length >= maxRequests) {
-      return false;
-    }
-
-    requestsRef.current.push(now);
-    return true;
+    // Clean up old submissions outside the window
+    submissionsRef.current = submissionsRef.current.filter((t) => now - t < windowMs);
+    return submissionsRef.current.length < maxRequests;
   }, [maxRequests, windowMs]);
 
-  const getRemainingTime = useCallback((): number => {
-    const now = Date.now();
-    const oldestRequest = requestsRef.current[0];
-    if (!oldestRequest) return 0;
+  const record = useCallback((): void => {
+    submissionsRef.current.push(Date.now());
+  }, []);
 
-    const earliestAllowed = oldestRequest + windowMs;
-    const remaining = earliestAllowed - now;
-    return Math.max(0, Math.ceil(remaining / 1000));
-  }, [windowMs]);
+  const reset = useCallback((): void => {
+    submissionsRef.current = [];
+  }, []);
 
-  const getRequestCount = useCallback((): number => {
-    const now = Date.now();
-    requestsRef.current = requestsRef.current.filter(
-      (timestamp) => now - timestamp < windowMs
-    );
-    return requestsRef.current.length;
-  }, [windowMs]);
-
-  return { checkRateLimit, getRemainingTime, getRequestCount };
-};
-
-export default useRateLimit;
+  return { check, record, reset };
+}

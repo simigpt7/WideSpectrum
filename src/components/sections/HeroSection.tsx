@@ -1,93 +1,178 @@
-import { ArrowDown, Play } from 'lucide-react';
-import Button from '../ui/Button';
-import ParticleCanvas from '../features/ParticleCanvas';
-import AnimatedLetters from '../features/AnimatedLetters';
-import { COMPANY_INFO } from '../../constants/company';
+import { memo, useState } from 'react';
+import { ChevronDown, Play, Sparkles, Compass } from 'lucide-react';
+import { Button } from '@/components/ui';
+import { ParticleCanvas, AnimatedLetters } from '@/components/features';
+import { useInView } from '@/hooks';
+import { COMPANY, COLORS } from '@/constants';
 
-const HeroSection = () => {
-  const handleScrollToServices = () => {
-    const element = document.querySelector('#services');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+interface HeroSectionProps {
+  scrollTo: (id: string) => void;
+}
+
+export const HeroSection = memo(function HeroSection({ scrollTo }: HeroSectionProps) {
+  const [contentRef] = useInView<HTMLDivElement>(0.1);
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-dark-950">
-      {/* Particle Background */}
+    <section
+      id="home"
+      className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
+      style={{ background: COLORS.darkBg }}
+    >
+      {/* Video Background */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ opacity: 0.5, zIndex: 1 }}
+        poster="/hero-poster.jpg"
+      >
+        <source src="/hero-video.mp4" type="video/mp4" />
+      </video>
+
+      {/* Gradient Overlays */}
+      <div
+        className="absolute inset-0 z-[2]"
+        style={{
+          background: `
+            radial-gradient(ellipse at 30% 20%, rgba(31, 138, 138, 0.15) 0%, transparent 50%),
+            radial-gradient(ellipse at 70% 80%, rgba(212, 175, 55, 0.08) 0%, transparent 40%),
+            linear-gradient(180deg, rgba(3, 10, 14, 0.7) 0%, rgba(3, 10, 14, 0.5) 50%, rgba(3, 10, 14, 0.8) 100%)
+          `,
+        }}
+      />
+
+      {/* Particle Canvas */}
       <ParticleCanvas />
 
-      {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-dark-950/80 via-transparent to-dark-950/90 pointer-events-none" />
-
-      {/* Content */}
-      <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
-        {/* Animated Title */}
-        <div className="mb-6">
-          <AnimatedLetters text={COMPANY_INFO.name} />
+      {/* Cinematic Statement */}
+      <div
+        ref={contentRef}
+        className="relative z-20 text-center px-6 max-w-6xl mx-auto w-full flex flex-col items-center"
+        style={{ paddingTop: '80px', paddingBottom: '120px' }}
+      >
+        {/* Pre-title */}
+        <div
+          className="mb-6 animate-fade-up opacity-0"
+          style={{
+            animationDelay: '0.2s',
+            animationFillMode: 'forwards',
+          }}
+        >
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-teal-500/30 bg-teal-900/20 backdrop-blur-sm">
+            <Sparkles size={14} className="text-gold" />
+            <span className="text-xs font-semibold tracking-[0.3em] text-teal-300/80 uppercase">
+              Premium Music Production Studio
+            </span>
+          </span>
         </div>
 
-        {/* Tagline */}
-        <p className="text-xl md:text-2xl text-gray-300 mb-4 animate-fade-in-up animation-delay-200">
-          {COMPANY_INFO.tagline}
+        {/* Main Headline */}
+        <h1
+          className="mb-6 text-center w-full"
+          style={{ fontFamily: 'Montserrat, sans-serif' }}
+        >
+          <AnimatedLetters
+            text="Build Your Sound"
+            baseDelay={0.4}
+            className="block text-[clamp(2.5rem,10vw,6rem)] font-black leading-[0.95] tracking-tight text-white mb-3"
+          />
+          <AnimatedLetters
+            text="Across the Spectrum"
+            baseDelay={0.9}
+            className="block text-[clamp(2.5rem,10vw,6rem)] font-black leading-[0.95] tracking-tight bg-gradient-to-r from-teal-300 via-aqua to-teal-light bg-clip-text text-transparent"
+          />
+        </h1>
+
+        {/* Cinematic Statement */}
+        <p
+          className="animate-fade-up opacity-0 text-xl md:text-2xl font-light mb-4 tracking-wide"
+          style={{
+            animationDelay: '1.4s',
+            animationFillMode: 'forwards',
+            color: COLORS.goldSoft,
+            textShadow: '0 0 40px rgba(212, 175, 55, 0.3)',
+          }}
+        >
+          "Not just music. A universe."
         </p>
 
         {/* Description */}
-        <p className="text-base md:text-lg text-gray-400 max-w-2xl mx-auto mb-8 animate-fade-in-up animation-delay-300">
-          {COMPANY_INFO.description}
+        <p
+          className="animate-fade-up opacity-0 text-lg md:text-xl text-teal-200/70 max-w-2xl mx-auto mb-10 font-light leading-relaxed"
+          style={{
+            animationDelay: '1.6s',
+            animationFillMode: 'forwards',
+          }}
+        >
+          Premium music production, mixing, mastering, and live band design —
+          trusted by artists and brands worldwide.
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up animation-delay-400">
+        <div
+          className="animate-fade-up opacity-0 flex flex-col sm:flex-row gap-4 justify-center mb-16"
+          style={{
+            animationDelay: '1.8s',
+            animationFillMode: 'forwards',
+          }}
+        >
           <Button
+            onClick={() => scrollTo('services')}
             variant="primary"
             size="lg"
-            onClick={() => {
-              const element = document.querySelector('#portfolio');
-              if (element) element.scrollIntoView({ behavior: 'smooth' });
-            }}
+            leftIcon={<Compass size={18} className="group-hover:rotate-12 transition-transform" />}
           >
-            <Play className="h-5 w-5" />
-            View Our Work
+            Explore World
           </Button>
           <Button
-            variant="secondary"
+            onClick={() => scrollTo('portfolio')}
+            variant="outline"
             size="lg"
-            onClick={() => {
-              const element = document.querySelector('#contact');
-              if (element) element.scrollIntoView({ behavior: 'smooth' });
-            }}
+            leftIcon={<Play size={18} />}
           >
-            Start a Project
+            Enter Experience
           </Button>
         </div>
 
-        {/* Collaborators Preview */}
-        <div className="mt-16 animate-fade-in-up animation-delay-500">
-          <p className="text-sm text-gray-500 mb-4">Trusted by top artists</p>
-          <div className="flex flex-wrap justify-center gap-4 text-gray-400 text-sm">
-            {COMPANY_INFO.collaborators.slice(0, 5).map((collaborator) => (
-              <span
-                key={collaborator}
-                className="px-3 py-1 bg-dark-800/50 rounded-full border border-white/5"
+        {/* Stats */}
+        <div
+          className="animate-fade-up opacity-0 grid grid-cols-3 gap-8 md:gap-12 max-w-lg mx-auto"
+          style={{
+            animationDelay: '2s',
+            animationFillMode: 'forwards',
+          }}
+        >
+          {COMPANY.stats.map(({ value, label }) => (
+            <div key={label} className="text-center">
+              <div
+                className="text-3xl md:text-4xl font-black"
+                style={{
+                  fontFamily: 'Montserrat, sans-serif',
+                  background: `linear-gradient(135deg, ${COLORS.aqua}, ${COLORS.tealLight})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
               >
-                {collaborator}
-              </span>
-            ))}
-          </div>
+                {value}
+              </div>
+              <div className="text-xs text-teal-400/50 mt-1 tracking-widest uppercase">{label}</div>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Scroll Indicator */}
-      <button
-        onClick={handleScrollToServices}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 text-gray-400 hover:text-white transition-colors duration-300 animate-bounce"
-        aria-label="Scroll to services"
-      >
-        <ArrowDown className="h-8 w-8" />
-      </button>
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce z-20">
+        <button
+          onClick={() => scrollTo('services')}
+          className="text-teal-400/50 hover:text-teal-400 transition-colors p-2"
+          aria-label="Scroll to services"
+        >
+          <ChevronDown size={32} strokeWidth={1.5} />
+        </button>
+      </div>
     </section>
   );
-};
-
-export default HeroSection;
+});

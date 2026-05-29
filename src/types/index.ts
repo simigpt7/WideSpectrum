@@ -1,59 +1,63 @@
-export interface ContactFormData {
+// ── Particle Types ────────────────────────────────────────────────────────────
+export interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  opacity: number;
+  color: string;
+  type: 'circle' | 'star' | 'line';
+  glow?: boolean;
+  angle?: number;
+}
+
+// ── Scroll Types ──────────────────────────────────────────────────────────────
+export interface ScrollState {
+  y: number;
+  progress: number;
+  direction: 'up' | 'down' | null;
+}
+
+// ── Form Types ───────────────────────────────────────────────────────────────
+export interface FormState {
   name: string;
   email: string;
-  phone?: string;
-  service?: string;
+  phone: string;
+  service: string;
   message: string;
 }
 
-export interface Service {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  features: string[];
+export interface FormErrors {
+  name?: string;
+  email?: string;
+  service?: string;
+  message?: string;
 }
 
-export interface PortfolioVideo {
+// ── Service Types ───────────────────────────────────────────────────────────
+export interface Service {
+  icon: React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>;
+  title: string;
+  desc: string;
+  features: string[];
+  featured?: boolean;
+  num: string;
+}
+
+// ── Video Types ─────────────────────────────────────────────────────────────
+export interface Video {
   id: string;
-  youtubeId: string;
   title: string;
   artist: string;
-  description: string;
-  year: number;
-  tags: string[];
 }
 
+// ── Testimonial Types ────────────────────────────────────────────────────────
 export interface Testimonial {
-  id: string;
+  text: string;
   name: string;
   role: string;
-  company?: string;
-  quote: string;
-  image?: string;
-  rating: number;
 }
 
-export interface CompanyInfo {
-  name: string;
-  tagline: string;
-  description: string;
-  email: string;
-  location: string;
-  foundedYear: number;
-  collaborators: string[];
-  socialLinks: {
-    youtube: string;
-    instagram: string;
-    linkedin: string;
-    twitter: string;
-  };
-}
-
-export interface ValidationRule {
-  required?: boolean;
-  minLength?: number;
-  maxLength?: number;
-  pattern?: RegExp;
-  message: string;
-}
+// ── Nav Types ───────────────────────────────────────────────────────────────
+export type NavItem = 'services' | 'about' | 'portfolio' | 'testimonials' | 'contact';

@@ -1,33 +1,32 @@
-import React from 'react';
-import { cn } from '../../utils/cn';
+import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
+import { cn } from '@/utils/cn';
 
-interface ContainerProps extends React.HTMLAttributes<HTMLDivElement> {
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
-  children: React.ReactNode;
+export interface ContainerProps extends HTMLAttributes<HTMLDivElement> {
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
+  as?: React.ElementType;
 }
 
-const Container = React.forwardRef<HTMLDivElement, ContainerProps>(
-  ({ className, size = 'lg', children, ...props }, ref) => {
-    const sizes = {
+export const Container = forwardRef<HTMLDivElement, ContainerProps>(
+  ({ className, maxWidth = 'xl', as: Component = 'div', children, ...props }, ref) => {
+    const maxWidths = {
       sm: 'max-w-3xl',
       md: 'max-w-5xl',
-      lg: 'max-w-7xl',
-      xl: 'max-w-[1536px]',
+      lg: 'max-w-6xl',
+      xl: 'max-w-7xl',
+      '2xl': 'max-w-screen-2xl',
       full: 'max-w-full',
     };
 
     return (
-      <div
+      <Component
         ref={ref}
-        className={cn('mx-auto px-4 sm:px-6 lg:px-8', sizes[size], className)}
+        className={cn('mx-auto px-4 sm:px-6', maxWidths[maxWidth], className)}
         {...props}
       >
         {children}
-      </div>
+      </Component>
     );
   }
 );
 
 Container.displayName = 'Container';
-
-export default Container;

@@ -1,15 +1,10 @@
-# Wide Spectrum Productions Robots.txt
-
+# Wide Spectrum Productions — robots.txt
 User-agent: *
 Allow: /
 
-# Sitemaps
+# Block staging subdomain crawling
+User-agent: *
+Disallow: /staging/
+
+# Sitemap
 Sitemap: https://widespectrumproductions.com/sitemap.xml
-
-# Disallow admin or sensitive paths
-Disallow: /api/
-Disallow: /_next/
-Disallow: /admin/
-
-# Crawl-delay for polite crawling
-Crawl-delay: 1

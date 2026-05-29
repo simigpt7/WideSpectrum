@@ -1,30 +1,36 @@
-import React, { useState } from 'react';
-import Input from '../ui/Input';
-import Textarea from '../ui/Textarea';
-import Select from '../ui/Select';
-import Button from '../ui/Button';
-import { Send, CheckCircle, AlertCircle } from 'lucide-react';
-import { submitContactForm } from '../../services/contact';
-import { SERVICES } from '../../constants/services';
-import { ContactFormData } from '../../types';
-import { sanitizeInput, sanitizeEmail } from '../../utils/sanitize';
-import useRateLimit from '../../hooks/useRateLimit';
+import { useState, useCallback } from 'react';
+import { Send, Check, AlertCircle, Loader2, Shield } from 'lucide-react';
+import { Button, Input, Textarea, Select } from '@/components/ui';
+import { useRateLimit } from '@/hooks';
+import { sanitizeInput, sanitizeEmail, sanitizePhone, generateCSRFToken } from '@/utils/sanitize';
+import type { FormState, FormErrors } from '@/types';
 
-const ContactForm = () => {
-  const [formData, setFormData] = useState<ContactFormData>({
+interface ContactFormProps {
+  onSubmit?: (data: FormState) => Promise<void>;
+  services: { value: string; label: string }[];
+}
+
+export function ContactForm({ onSubmit, services }: ContactFormProps) {
+  const [formData, setFormData] = useState<FormState>({
     name: '',
     email: '',
     phone: '',
     service: '',
     message: '',
   });
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [csrfToken] = useState(() => generateCSRFToken());
 
-  const [errors, setErrors] = useState<Partial<Record<keyof ContactFormData, string>>>({});
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const { checkRateLimit, getRemainingTime } = useRateLimit({ maxRequests: 5, windowMs: 60000 });
+  const { check: checkRateLimit, record: recordSubmission } = useRateLimit({
+    maxRequests: 5,
+    windowMs: 3600000, // 1 hour
+  });
 
-  const validateForm = (): boolean => {
-    const newErrors: Partial<Record<keyof ContactFormData, string>> = {};
+  // Validate form
+  const validateForm = useCallback((): boolean => {
+    const newErrors: FormErrors = {};
 
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
@@ -35,7 +41,11 @@ const ContactForm = () => {
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = 'Please enter a valid email';
+    }
+
+    if (!formData.service) {
+      newErrors.service = 'Please select a service';
     }
 
     if (!formData.message.trim()) {
@@ -46,142 +56,189 @@ const ContactForm = () => {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [formData]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  // Handle input change with sanitization
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+      const { name, value } = e.target;
+      let sanitizedValue: string;
 
-    // Clear error when user starts typing
-    if (errors[name as keyof ContactFormData]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
-    }
-  };
+      switch (name) {
+        case 'email':
+          sanitizedValue = sanitizeEmail(value);
+          break;
+        case 'phone':
+          sanitizedValue = sanitizePhone(value);
+          break;
+        default:
+          sanitizedValue = sanitizeInput(value);
+      }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+      setFormData((prev) => ({ ...prev, [name]: sanitizedValue }));
+      // Clear error when user types
+      if (errors[name as keyof FormErrors]) {
+        setErrors((prev) => ({ ...prev, [name]: undefined }));
+      }
+    },
+    [errors]
+  );
 
-    if (!checkRateLimit()) {
-      setStatus('error');
-      return;
-    }
+  // Handle form submit
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
 
-    if (!validateForm()) return;
+      if (!validateForm()) return;
 
-    setStatus('loading');
+      // Check rate limit
+      if (!checkRateLimit()) {
+        setSubmitStatus('error');
+        alert('Too many submissions. Please wait before trying again.');
+        return;
+      }
 
-    try {
-      const sanitizedData: ContactFormData = {
-        name: sanitizeInput(formData.name),
-        email: sanitizeEmail(formData.email) || formData.email,
-        phone: formData.phone ? sanitizeInput(formData.phone) : undefined,
-        service: formData.service || undefined,
-        message: sanitizeInput(formData.message),
-      };
+      setIsSubmitting(true);
 
-      await submitContactForm(sanitizedData);
-      setStatus('success');
-      setFormData({ name: '', email: '', phone: '', service: '', message: '' });
+      try {
+        if (onSubmit) {
+          await onSubmit(formData);
+        } else {
+          // Default behavior - call Supabase Edge Function
+          const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-contact-email`;
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              'X-CSRF-Token': csrfToken,
+            },
+            body: JSON.stringify({
+              ...formData,
+              _csrf: csrfToken,
+            }),
+          });
 
-      // Reset success message after 5 seconds
-      setTimeout(() => setStatus('idle'), 5000);
-    } catch (error) {
-      setStatus('error');
-      console.error('Form submission error:', error);
-    }
-  };
+          if (!response.ok) {
+            throw new Error('Failed to send message');
+          }
+        }
 
-  const serviceOptions = SERVICES.map((service) => ({
-    value: service.id,
-    label: service.title,
-  }));
+        recordSubmission();
+        setSubmitStatus('success');
+        setFormData({ name: '', email: '', phone: '', service: '', message: '' });
+        setTimeout(() => setSubmitStatus('idle'), 6000);
+      } catch {
+        setSubmitStatus('error');
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [formData, csrfToken, validateForm, checkRateLimit, recordSubmission, onSubmit]
+  );
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <Input
-        label="Name"
-        name="name"
-        value={formData.name}
-        onChange={handleChange}
-        placeholder="Your name"
-        error={errors.name}
-        required
-      />
-
-      <Input
-        label="Email"
-        name="email"
-        type="email"
-        value={formData.email}
-        onChange={handleChange}
-        placeholder="your@email.com"
-        error={errors.email}
-        required
-      />
-
-      <Input
-        label="Phone (Optional)"
-        name="phone"
-        type="tel"
-        value={formData.phone}
-        onChange={handleChange}
-        placeholder="+91 98765 43210"
-        error={errors.phone}
-      />
-
-      <Select
-        label="Service (Optional)"
-        name="service"
-        value={formData.service}
-        onChange={handleChange}
-        options={serviceOptions}
-        placeholder="Select a service"
-      />
-
-      <Textarea
-        label="Message"
-        name="message"
-        value={formData.message}
-        onChange={handleChange}
-        placeholder="Tell us about your project..."
-        error={errors.message}
-        required
-        rows={5}
-      />
-
-      {status === 'success' && (
-        <div className="flex items-center gap-2 p-4 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400">
-          <CheckCircle className="h-5 w-5 flex-shrink-0" />
-          <p>Thank you! Your message has been sent successfully. We will get back to you soon.</p>
+    <div className="glass-card p-8 rounded-2xl">
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Name & Email Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <Input
+            id="name"
+            name="name"
+            label="Your Name *"
+            type="text"
+            required
+            placeholder="Your name"
+            value={formData.name}
+            onChange={handleChange}
+            error={errors.name}
+          />
+          <Input
+            id="email"
+            name="email"
+            label="Email Address *"
+            type="email"
+            required
+            placeholder="your@email.com"
+            value={formData.email}
+            onChange={handleChange}
+            error={errors.email}
+          />
         </div>
-      )}
 
-      {status === 'error' && (
-        <div className="flex items-center gap-2 p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400">
-          <AlertCircle className="h-5 w-5 flex-shrink-0" />
-          {getRemainingTime() > 0 ? (
-            <p>Too many requests. Please wait {getRemainingTime()} seconds before trying again.</p>
-          ) : (
-            <p>Something went wrong. Please try again later.</p>
-          )}
+        {/* Phone & Service Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <Input
+            id="phone"
+            name="phone"
+            label="Phone Number"
+            type="tel"
+            placeholder="+91 98765 43210"
+            value={formData.phone}
+            onChange={handleChange}
+          />
+          <Select
+            id="service"
+            name="service"
+            label="Service Interested In *"
+            required
+            options={services}
+            value={formData.service}
+            onChange={handleChange}
+            error={errors.service}
+          />
         </div>
-      )}
 
-      <Button
-        type="submit"
-        variant="primary"
-        size="lg"
-        className="w-full"
-        isLoading={status === 'loading'}
-        disabled={status === 'loading'}
-        rightIcon={<Send className="h-4 w-4" />}
-      >
-        Send Message
-      </Button>
-    </form>
+        {/* Message */}
+        <Textarea
+          id="message"
+          name="message"
+          label="Tell Us About Your Project *"
+          required
+          rows={5}
+          placeholder="Project details..."
+          value={formData.message}
+          onChange={handleChange}
+          error={errors.message}
+        />
+
+        {/* Hidden CSRF Field */}
+        <input type="hidden" name="_csrf" value={csrfToken} />
+
+        {/* Status Messages */}
+        {submitStatus === 'success' && (
+          <div className="p-4 rounded-lg bg-teal-900/40 border border-teal-700/40 text-teal-300 text-sm flex items-center gap-2">
+            <Check size={16} className="text-green-400" />
+            Message sent successfully! We'll get back to you shortly.
+          </div>
+        )}
+
+        {submitStatus === 'error' && (
+          <div className="p-4 rounded-lg bg-red-900/40 border border-red-700/40 text-red-300 text-sm flex items-center gap-2">
+            <AlertCircle size={16} />
+            Failed to send message. Please try again.
+          </div>
+        )}
+
+        {/* Security Badge */}
+        <div className="flex items-center gap-2 text-teal-400/50 text-xs">
+          <Shield size={14} />
+          <span>Secure form with CSRF protection & rate limiting</span>
+        </div>
+
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          variant="primary"
+          size="lg"
+          className="w-full"
+          isLoading={isSubmitting}
+          disabled={isSubmitting}
+          leftIcon={!isSubmitting ? <Send size={18} /> : undefined}
+        >
+          {isSubmitting ? 'Sending...' : 'Send Message'}
+        </Button>
+      </form>
+    </div>
   );
-};
-
-export default ContactForm;
+}

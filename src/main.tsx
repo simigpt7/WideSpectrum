@@ -1,43 +1,19 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import App from './App';
-import { AdminLayout } from './layouts/AdminLayout';
-import { AdminLogin } from './pages/admin/AdminLogin';
-import { AdminDashboard } from './pages/admin/AdminDashboard';
-import { ServicesPage } from './pages/admin/ServicesPage';
-import { PortfolioPage } from './pages/admin/PortfolioPage';
-import { ContactsPage } from './pages/admin/ContactsPage';
-import './styles/index.css';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App.tsx';
+import './index.css';
+import { initMonitoring } from './lib/monitoring';
+import { initAnalytics } from './lib/analytics';
+import { initUptimeMonitoring } from './lib/uptime';
 
-// Initialize Sentry in production
-if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
-  import('./lib/sentry');
-}
+// Initialise in parallel, non-blocking — none of these affect the render
+initAnalytics();
+initMonitoring();
+initUptimeMonitoring();
 
-// Initialize web vitals tracking
-if (typeof window !== 'undefined') {
-  import('./lib/analytics');
-}
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <Routes>
-        {/* Public Website */}
-        <Route path="/" element={<App />} />
-
-        {/* Admin Routes */}
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="services" element={<ServicesPage />} />
-          <Route path="portfolio" element={<PortfolioPage />} />
-          <Route path="contacts" element={<ContactsPage />} />
-          <Route path="testimonials" element={<AdminDashboard />} />
-          <Route path="settings" element={<AdminDashboard />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
-  </React.StrictMode>
+// Single root render (was duplicated — now fixed)
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>
 );

@@ -1,29 +1,112 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
-
-interface EmailPayload {
+interface ContactPayload {
   name: string;
   email: string;
-  phone?: string;
-  service?: string;
+  phone: string;
+  service: string;
   message: string;
+  _csrf?: string;
+}
+
+// Rate limiting store (in-memory, resets on function cold start)
+const rateLimitStore = new Map<string, { count: number; firstRequest: number }>();
+const RATE_LIMIT_WINDOW = 3600000; // 1 hour in ms
+const RATE_LIMIT_MAX = 5;
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-CSRF-Token, X-Client-Info, Apikey",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "X-XSS-Protection": "1; mode=block",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+};
+
+// Input sanitization
+function sanitize(input: string): string {
+  return input
+    .replace(/[<>]/g, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+=/gi, '')
+    .trim()
+    .slice(0, 2000);
+}
+
+function sanitizeEmail(email: string): string {
+  return email.toLowerCase().trim().replace(/[^a-z0-9@._+-]/g, '');
+}
+
+function getClientIP(req: Request): string {
+  const forwarded = req.headers.get('x-forwarded-for');
+  const realIP = req.headers.get('x-real-ip');
+  return (forwarded?.split(',')[0]?.trim() || realIP || 'unknown');
+}
+
+function checkRateLimit(clientId: string): boolean {
+  const now = Date.now();
+  const record = rateLimitStore.get(clientId);
+
+  if (!record) {
+    rateLimitStore.set(clientId, { count: 1, firstRequest: now });
+    return true;
+  }
+
+  if (now - record.firstRequest > RATE_LIMIT_WINDOW) {
+    rateLimitStore.set(clientId, { count: 1, firstRequest: now });
+    return true;
+  }
+
+  if (record.count >= RATE_LIMIT_MAX) {
+    return false;
+  }
+
+  record.count++;
+  return true;
+}
+
+// Simple email validation
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.length <= 254;
+}
+
+function validatePayload(payload: ContactPayload): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+
+  if (!payload.name || typeof payload.name !== 'string' || payload.name.trim().length < 2) {
+    errors.push('Name must be at least 2 characters');
+  }
+
+  if (!payload.email || !isValidEmail(payload.email)) {
+    errors.push('Valid email is required');
+  }
+
+  if (!payload.service || typeof payload.service !== 'string') {
+    errors.push('Service selection is required');
+  }
+
+  if (!payload.message || typeof payload.message !== 'string' || payload.message.trim().length < 10) {
+    errors.push('Message must be at least 10 characters');
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
 }
 
 Deno.serve(async (req: Request) => {
-  // Handle CORS preflight requests
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, {
-      status: 200,
+      status: 204,
       headers: corsHeaders,
     });
   }
 
-  // Only allow POST requests
+  // Only allow POST
   if (req.method !== "POST") {
     return new Response(
       JSON.stringify({ error: "Method not allowed" }),
@@ -34,13 +117,45 @@ Deno.serve(async (req: Request) => {
     );
   }
 
+  const clientIP = getClientIP(req);
+
+  // Check rate limit
+  if (!checkRateLimit(clientIP)) {
+    return new Response(
+      JSON.stringify({
+        error: "Rate limit exceeded",
+        message: "Too many requests. Please wait before trying again."
+      }),
+      {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
+  }
+
   try {
-    const body: EmailPayload = await req.json();
-
-    // Validate required fields
-    if (!body.name || !body.email || !body.message) {
+    // Parse JSON with size limit
+    const contentLength = req.headers.get('content-length');
+    if (contentLength && parseInt(contentLength) > 10000) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
+        JSON.stringify({ error: "Request too large" }),
+        {
+          status: 413,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const payload: ContactPayload = await req.json();
+
+    // Validate payload
+    const validation = validatePayload(payload);
+    if (!validation.valid) {
+      return new Response(
+        JSON.stringify({
+          error: "Validation failed",
+          details: validation.errors,
+        }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -48,25 +163,106 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(body.email)) {
-      return new Response(
-        JSON.stringify({ error: "Invalid email address" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
+    // Sanitize all inputs
+    const sanitizedPayload = {
+      name: sanitize(payload.name),
+      email: sanitizeEmail(payload.email),
+      phone: sanitize(payload.phone || ''),
+      service: sanitize(payload.service),
+      message: sanitize(payload.message),
+    };
 
-    // Get Resend API key from environment
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    // Build email body
+    const emailHtml = `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #0a2030; border-radius: 12px; color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid rgba(31, 138, 138, 0.3);">
+          <h1 style="margin: 0; color: #7EE7C8; font-size: 24px;">Wide Spectrum Productions</h1>
+          <p style="margin: 5px 0 0 0; color: rgba(255,255,255,0.6); font-size: 14px;">New Contact Submission</p>
+        </div>
 
-    if (!resendApiKey) {
-      console.error("RESEND_API_KEY not configured");
+        <div style="background: rgba(10, 32, 48, 0.6); padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 10px 0; color: rgba(126, 231, 200, 0.6); font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Name</td>
+              <td style="padding: 10px 0; color: #ffffff; font-weight: 600;">${sanitizedPayload.name}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; color: rgba(126, 231, 200, 0.6); font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Email</td>
+              <td style="padding: 10px 0;"><a href="mailto:${sanitizedPayload.email}" style="color: #3ED6A0; text-decoration: none;">${sanitizedPayload.email}</a></td>
+            </tr>
+            ${sanitizedPayload.phone ? `
+            <tr>
+              <td style="padding: 10px 0; color: rgba(126, 231, 200, 0.6); font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Phone</td>
+              <td style="padding: 10px 0; color: #ffffff;">${sanitizedPayload.phone}</td>
+            </tr>
+            ` : ''}
+            <tr>
+              <td style="padding: 10px 0; color: rgba(126, 231, 200, 0.6); font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Service</td>
+              <td style="padding: 10px 0; color: #ffffff;">${sanitizedPayload.service}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <h3 style="margin: 0 0 15px 0; color: rgba(126, 231, 200, 0.6); font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Message</h3>
+          <div style="background: rgba(10, 32, 48, 0.6); padding: 20px; border-radius: 8px; border-left: 3px solid #3ED6A0;">
+            <p style="margin: 0; color: #ffffff; line-height: 1.6; white-space: pre-wrap;">${sanitizedPayload.message}</p>
+          </div>
+        </div>
+
+        <div style="text-align: center; padding-top: 20px; border-top: 1px solid rgba(31, 138, 138, 0.3); color: rgba(255,255,255,0.4); font-size: 12px;">
+          <p style="margin: 0;">This message was sent from the Wide Spectrum Productions website contact form.</p>
+          <p style="margin: 5px 0 0 0;">Reply to: <a href="mailto:${sanitizedPayload.email}" style="color: #3ED6A0;">${sanitizedPayload.email}</a></p>
+        </div>
+      </div>
+    `.trim();
+
+    const emailText = `
+New Contact Submission from Wide Spectrum Productions
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Name: ${sanitizedPayload.name}
+Email: ${sanitizedPayload.email}
+${sanitizedPayload.phone ? `Phone: ${sanitizedPayload.phone}` : ''}
+Service: ${sanitizedPayload.service}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Message:
+${sanitizedPayload.message}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Reply to: ${sanitizedPayload.email}
+    `.trim();
+
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${Deno.env.get("RESEND_API_KEY")}`,
+      },
+      body: JSON.stringify({
+        from: "Wide Spectrum Productions <onboarding@resend.dev>",
+        to: "WideSpectrumProductions@gmail.com",
+        reply_to: sanitizedPayload.email,
+        subject: `New Inquiry: ${sanitizedPayload.name} - ${sanitizedPayload.service}`,
+        html: emailHtml,
+        text: emailText,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error("Email sending failed:", error);
+
+      // Don't expose internal errors to client
       return new Response(
-        JSON.stringify({ error: "Email service not configured" }),
+        JSON.stringify({
+          error: "Failed to send email",
+          message: "An error occurred. Please try again later.",
+        }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -74,114 +270,24 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Prepare email content
-    const emailContent = {
-      from: "noreply@widespectrumproductions.com",
-      to: "WideSpectrumProductions@gmail.com",
-      reply_to: body.email,
-      subject: `New Contact Form Submission from ${body.name}`,
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>New Contact Submission</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #a855f7, #0ea5e9); padding: 20px; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0;">New Contact Form Submission</h1>
-          </div>
-          <div style="background: #f8f9fa; padding: 20px; border: 1px solid #e9ecef; border-top: none;">
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="padding: 10px; border-bottom: 1px solid #dee2e6; font-weight: bold; width: 120px;">Name:</td>
-                <td style="padding: 10px; border-bottom: 1px solid #dee2e6;">${escapeHtml(body.name)}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px; border-bottom: 1px solid #dee2e6; font-weight: bold;">Email:</td>
-                <td style="padding: 10px; border-bottom: 1px solid #dee2e6;">
-                  <a href="mailto:${escapeHtml(body.email)}" style="color: #a855f7;">${escapeHtml(body.email)}</a>
-                </td>
-              </tr>
-              ${body.phone ? `
-                <tr>
-                  <td style="padding: 10px; border-bottom: 1px solid #dee2e6; font-weight: bold;">Phone:</td>
-                  <td style="padding: 10px; border-bottom: 1px solid #dee2e6;">${escapeHtml(body.phone)}</td>
-                </tr>
-              ` : ''}
-              ${body.service ? `
-                <tr>
-                  <td style="padding: 10px; border-bottom: 1px solid #dee2e6; font-weight: bold;">Service:</td>
-                  <td style="padding: 10px; border-bottom: 1px solid #dee2e6;">${escapeHtml(body.service)}</td>
-                </tr>
-              ` : ''}
-            </table>
-            <div style="margin-top: 20px;">
-              <h3 style="margin-bottom: 10px; color: #a855f7;">Message:</h3>
-              <p style="white-space: pre-wrap; background: white; padding: 15px; border-radius: 5px; border: 1px solid #dee2e6;">${escapeHtml(body.message)}</p>
-            </div>
-          </div>
-          <div style="background: #0f172a; padding: 15px; border-radius: 0 0 10px 10px; text-align: center;">
-            <p style="color: #94a3b8; margin: 0; font-size: 12px;">
-              This email was sent from the contact form on Wide Spectrum Productions website
-            </p>
-          </div>
-        </body>
-        </html>
-      `,
-      text: `
-New Contact Form Submission
-
-Name: ${body.name}
-Email: ${body.email}
-${body.phone ? `Phone: ${body.phone}` : ""}
-${body.service ? `Service: ${body.service}` : ""}
-
-Message:
-${body.message}
-
----
-This email was sent from the contact form on Wide Spectrum Productions website
-      `.trim(),
-    };
-
-    // Send email using Resend API
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(emailContent),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      console.error("Resend API error:", error);
-      throw new Error("Failed to send email");
-    }
-
-    const result = await response.json();
-    console.log("Email sent successfully:", result.id);
-
     return new Response(
       JSON.stringify({
         success: true,
         message: "Email sent successfully",
-        messageId: result.id,
       }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
+
   } catch (error) {
-    console.error("Error processing request:", error);
+    console.error("Unexpected error:", error);
+
     return new Response(
       JSON.stringify({
         error: "Internal server error",
-        message: error.message,
+        message: "An unexpected error occurred. Please try again later.",
       }),
       {
         status: 500,
@@ -190,15 +296,3 @@ This email was sent from the contact form on Wide Spectrum Productions website
     );
   }
 });
-
-// Helper function to escape HTML for security
-function escapeHtml(text: string): string {
-  const map: Record<string, string> = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;",
-  };
-  return text.replace(/[&<>"']/g, (char) => map[char]);
-}

@@ -1,108 +1,82 @@
-import { Music, Mic, Volume2, Radio, Film, Sparkles, Headphones, Music2 } from 'lucide-react';
-
-export interface Service {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ComponentType<{ className?: string }>;
-  features: string[];
-}
+import {
+  Sliders,
+  Mic2,
+  Headphones,
+  Music,
+  Megaphone,
+  Play,
+  Disc,
+  Zap,
+} from 'lucide-react';
+import type { Service } from '@/types';
 
 export const SERVICES: Service[] = [
   {
-    id: 'music-production',
+    icon: Sliders,
     title: 'Music Production',
-    description: 'Full-scale music production from concept to final master, working closely with artists to realize their vision.',
-    icon: Music,
-    features: [
-      'Full composition and arrangement',
-      'Instrumental programming and recording',
-      'Artist collaboration and development',
-      'Genre-fluid production approach',
-    ],
+    desc: 'Full-scale music production from concept to final record',
+    features: ['Arrangement & orchestration', 'Live Instrumentation', 'Beat production', 'Artistic direction'],
+    featured: true,
+    num: '01',
   },
   {
-    id: 'mixing',
-    title: 'Mixing',
-    description: 'Professional mixing services that bring clarity, depth, and power to your tracks.',
+    icon: Mic2,
+    title: 'Lyrics & Composition',
+    desc: 'Original songwriting that combines meaningful lyrics with compelling melodies tailored to your style.',
+    features: ['Lyrics writing', 'Melody composition', 'Song structuring', 'Genre-specific writing'],
+    num: '02',
+  },
+  {
     icon: Headphones,
-    features: [
-      'Balanced frequency spectrum',
-      'Dynamic control and automation',
-      'Spatial positioning and depth',
-      'Industry-standard delivery',
-    ],
+    title: 'Live Band Design Production',
+    desc: 'End-to-end design of your live sound, adapting studio records into powerful, stage-ready performances.',
+    features: ['Band arrangement & restructuring', 'Live sound design', 'Playback & session design', 'Performance flow planning'],
+    num: '03',
   },
   {
-    id: 'mastering',
+    icon: Music,
+    title: 'Background Scoring',
+    desc: 'Music composed to enhance visual storytelling with emotion, tension, and atmosphere.',
+    features: ['Film, ads & visual scoring', 'Theme and motif creation', 'Scene-specific composition', 'Hybrid/orchestral sound design'],
+    num: '04',
+  },
+  {
+    icon: Megaphone,
+    title: 'Ads & Jingles',
+    desc: 'Catchy music crafted to build brand recall and connect with audiences',
+    features: ['Sonic branding', 'Jingles & hooks', 'Voiceover integration', 'Format adaptations (TV, digital, radio)'],
+    num: '05',
+  },
+  {
+    icon: Play,
+    title: 'Mixing',
+    desc: 'Detailed mixing that balances, enhances, and refines each element into a cohesive, professional track',
+    features: ['EQ, compression & dynamics control', 'Stereo imaging & depth', 'Vocal tuning & timing alignment'],
+    num: '06',
+  },
+  {
+    icon: Disc,
     title: 'Mastering',
-    description: 'Final polish that makes your music sound professional on any playback system.',
-    icon: Volume2,
-    features: [
-      'Loudness optimization',
-      'Format-specific mastering',
-      'Stem mastering available',
-      'Analog and digital processing',
-    ],
+    desc: 'Technical finalization to ensure translation, consistency, and competitive loudness across all systems.',
+    features: ['Loudness & tonal balance optimization', 'Stereo enhancement', 'Multi-format exports (WAV, streaming specs)', 'Final quality checks'],
+    num: '07',
   },
   {
-    id: 'live-sound',
-    title: 'Live Sound',
-    description: 'Complete live sound solutions for concerts, events, and tours.',
-    icon: Radio,
-    features: [
-      'FOH and monitor engineering',
-      'System design and optimization',
-      'Tour sound management',
-      'Festival and venue support',
-    ],
+    icon: Zap,
+    title: 'Podcast Production',
+    desc: 'Clean, professional podcast audio production designed for clarity, consistency, and listener engagement.',
+    features: ['Audio editing & noise reduction', 'EQ, compression & leveling', 'Intro/outro production', 'Platform-ready exports'],
+    num: '08',
   },
-  {
-    id: 'film-scoring',
-    title: 'Film Scoring',
-    description: 'Cinematic scores that elevate storytelling and create emotional impact.',
-    icon: Film,
-    features: [
-      'Orchestral arrangement',
-      'Sync and licensing',
-      'Theme development',
-      'Full soundtrack production',
-    ],
-  },
-  {
-    id: 'artist-development',
-    title: 'Artist Development',
-    description: 'Comprehensive development programs to help artists reach their full potential.',
-    icon: Sparkles,
-    features: [
-      'Sound identity crafting',
-      'Repertoire planning',
-      'Brand consistency',
-      'Career strategy consulting',
-    ],
-  },
-  {
-    id: 'sound-design',
-    title: 'Sound Design',
-    description: 'Creative sound design for games, films, advertisements, and digital media.',
-    icon: Music2,
-    features: [
-      'Custom sound creation',
-      'Foley and SFX',
-      'Audio branding',
-      'Interactive audio for games',
-    ],
-  },
-  {
-    id: 'music-supervision',
-    title: 'Music Supervision',
-    description: 'Full-service music supervision for films, TV, and advertising campaigns.',
-    icon: Mic,
-    features: [
-      'Music licensing and clearance',
-      'Soundtrack curation',
-      'Artist negotiations',
-      'Budget management',
-    ],
-  },
+];
+
+export const MARQUEE_ITEMS = [
+  'MUSIC PRODUCTION',
+  'MIXING & MASTERING',
+  'LIVE BAND DESIGN',
+  'BACKGROUND SCORING',
+  'ADS & JINGLES',
+  'PODCAST PRODUCTION',
+  'LYRICS & COMPOSITION',
+  'SONIC BRANDING',
 ];

@@ -1,95 +1,47 @@
-import React from 'react';
-import { ChevronDown } from 'lucide-react';
-import { cn } from '../../utils/cn';
+import { forwardRef, type SelectHTMLAttributes } from 'react';
+import { cn } from '@/utils/cn';
 
-interface SelectOption {
-  value: string;
-  label: string;
-}
-
-interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
-  label?: string;
+export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   error?: string;
-  helperText?: string;
-  options: SelectOption[];
-  placeholder?: string;
-  variant?: 'default' | 'filled';
+  label?: string;
+  options: { value: string; label: string }[];
 }
 
-const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  (
-    {
-      className,
-      label,
-      error,
-      helperText,
-      options,
-      placeholder = 'Select an option',
-      variant = 'default',
-      id,
-      ...props
-    },
-    ref
-  ) => {
-    const selectId = id || label?.toLowerCase().replace(/\s+/g, '-');
-
-    const baseStyles = 'w-full rounded-lg transition-all duration-200 appearance-none cursor-pointer';
-
-    const variants = {
-      default: 'bg-dark-800/50 border border-white/10 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20',
-      filled: 'bg-dark-800 border border-transparent focus:border-primary-500 focus:bg-dark-700',
-    };
-
-    const errorStyles = error
-      ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
-      : '';
-
+export const Select = forwardRef<HTMLSelectElement, SelectProps>(
+  ({ className, error, label, id, options, ...props }, ref) => {
     return (
       <div className="w-full">
         {label && (
           <label
-            htmlFor={selectId}
-            className="block text-sm font-medium text-gray-300 mb-2"
+            htmlFor={id}
+            className="text-xs text-teal-400/60 uppercase tracking-widest mb-1.5 block"
           >
             {label}
           </label>
         )}
-        <div className="relative">
-          <select
-            ref={ref}
-            id={selectId}
-            className={cn(
-              baseStyles,
-              variants[variant],
-              errorStyles,
-              'px-4 py-3 pr-10 text-white focus:outline-none',
-              !props.value && 'text-gray-500',
-              className
-            )}
-            {...props}
-          >
-            <option value="" disabled className="text-gray-500 bg-dark-800">
-              {placeholder}
+        <select
+          id={id}
+          className={cn(
+            'input-field w-full px-4 py-3 rounded-lg text-sm cursor-pointer',
+            'focus:outline-none focus:ring-2 focus:ring-teal-500/30',
+            error && 'border-red-500 focus:ring-red-500/30',
+            className
+          )}
+          ref={ref}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${id}-error` : undefined}
+          {...props}
+        >
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
             </option>
-            {options.map((option) => (
-              <option
-                key={option.value}
-                value={option.value}
-                className="text-white bg-dark-800"
-              >
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-            <ChevronDown className="h-5 w-5" />
-          </div>
-        </div>
+          ))}
+        </select>
         {error && (
-          <p className="mt-2 text-sm text-red-500">{error}</p>
-        )}
-        {helperText && !error && (
-          <p className="mt-2 text-sm text-gray-500">{helperText}</p>
+          <p id={`${id}-error`} className="text-red-400 text-xs mt-1 flex items-center gap-1">
+            {error}
+          </p>
         )}
       </div>
     );
@@ -97,5 +49,3 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 );
 
 Select.displayName = 'Select';
-
-export default Select;

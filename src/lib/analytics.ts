@@ -1,110 +1,85 @@
-import { onCLS, onFID, onLCP, onFCP, onTTFB, Metric } from 'web-vitals';
+/**
+ * Analytics module — Google Analytics 4 + event tracking
+ *
+ * SETUP:
+ *   1. Add VITE_GA_ID=G-XXXXXXXXXX to .env
+ *   2. Call initAnalytics() in src/main.tsx
+ *   3. Use trackEvent() throughout the app for conversion tracking
+ */
 
-// Send metrics to analytics or logging service
-const sendToAnalytics = (metric: Metric) => {
-  // Log to console in development
-  if (import.meta.env.DEV) {
-    console.log('[Web Vitals]', {
-      name: metric.name,
-      value: metric.value,
-      rating: metric.rating,
-      delta: metric.delta,
-      id: metric.id,
-    });
+declare global {
+  interface Window {
+    dataLayer: unknown[];
+    gtag: (...args: unknown[]) => void;
   }
+}
 
-  // Send to analytics endpoint or service
-  // In production, you would send this to your analytics service
-  if (import.meta.env.PROD && import.meta.env.VITE_ANALYTICS_ENDPOINT) {
-    const body = JSON.stringify({
-      name: metric.name,
-      value: metric.value,
-      rating: metric.rating,
-      delta: metric.delta,
-      id: metric.id,
-      page: window.location.pathname,
-      timestamp: Date.now(),
-    });
+// ─── Init GA4 ─────────────────────────────────────────────────────────────────
+export function initAnalytics(): void {
+  const gaId = import.meta.env.VITE_GA_ID;
+  if (!gaId || !import.meta.env.PROD) return;
 
-    // Use navigator.sendBeacon for reliability
-    if (navigator.sendBeacon) {
-      navigator.sendBeacon(import.meta.env.VITE_ANALYTICS_ENDPOINT, body);
-    } else {
-      fetch(import.meta.env.VITE_ANALYTICS_ENDPOINT, {
-        body,
-        method: 'POST',
-        keepalive: true,
-        headers: { 'Content-Type': 'application/json' },
-      }).catch(() => {
-        // Silently fail
-      });
-    }
-  }
+  // Inject GA script dynamically — avoids blocking main thread
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+  document.head.appendChild(script);
 
-  // Also send to Sentry if configured
-  if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
-    import('@sentry/react').then((Sentry) => {
-      Sentry.captureMessage(`Performance: ${metric.name}`, {
-        level: metric.rating === 'poor' ? 'warning' : 'info',
-        extra: {
-          metricName: metric.name,
-          metricValue: metric.value,
-          metricRating: metric.rating,
-          page: window.location.pathname,
-        },
-      });
-    });
-  }
-};
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function (...args: unknown[]) {
+    window.dataLayer.push(args);
+  };
+  window.gtag('js', new Date());
+  window.gtag('config', gaId, {
+    // Anonymize IP for GDPR compliance
+    anonymize_ip: true,
+    // Reduce data sent to GA
+    send_page_view: true,
+  });
+}
 
-// Initialize web vitals tracking
-export const initWebVitals = () => {
-  // Core Web Vitals
-  onCLS(sendToAnalytics);
-  onFID(sendToAnalytics);
-  onLCP(sendToAnalytics);
+// ─── Event Tracking ───────────────────────────────────────────────────────────
+type EventCategory =
+  | 'engagement'
+  | 'conversion'
+  | 'navigation'
+  | 'contact'
+  | 'portfolio';
 
-  // Additional metrics
-  onFCP(sendToAnalytics); // First Contentful Paint
-  onTTFB(sendToAnalytics); // Time to First Byte
-};
+interface TrackEventParams {
+  action: string;
+  category: EventCategory;
+  label?: string;
+  value?: number;
+}
 
-// Performance observer for custom metrics
-export const observePerformance = () => {
-  if (typeof PerformanceObserver === 'undefined') return;
+export function trackEvent({ action, category, label, value }: TrackEventParams): void {
+  if (typeof window.gtag !== 'function') return;
 
-  // Long tasks
-  try {
-    const longTaskObserver = new PerformanceObserver((list) => {
-      const entries = list.getEntries();
-      entries.forEach((entry) => {
-        console.log('[Performance] Long task detected:', {
-          duration: entry.duration,
-          startTime: entry.startTime,
-        });
-      });
-    });
-    longTaskObserver.observe({ entryTypes: ['longtask'] });
-  } catch (e) {
-    // Browser doesn't support longtask
-  }
+  window.gtag('event', action, {
+    event_category: category,
+    event_label: label,
+    value,
+  });
+}
 
-  // Layout shifts
-  try {
-    const layoutShiftObserver = new PerformanceObserver((list) => {
-      const entries = list.getEntries();
-      entries.forEach((entry) => {
-        if ('value' in entry) {
-          console.log('[Performance] Layout shift:', entry);
-        }
-      });
-    });
-    layoutShiftObserver.observe({ entryTypes: ['layout-shift'] });
-  } catch (e) {
-    // Browser doesn't support layout-shift
-  }
-};
+// ─── Conversion Events ────────────────────────────────────────────────────────
+/** Call when user submits the contact form */
+export function trackContactFormSubmit(service: string): void {
+  trackEvent({ action: 'contact_form_submit', category: 'conversion', label: service });
+}
 
-// Initialize on load
-initWebVitals();
-observePerformance();
+/** Call when user clicks a CTA button */
+export function trackCTAClick(ctaName: string): void {
+  trackEvent({ action: 'cta_click', category: 'conversion', label: ctaName });
+}
+
+/** Call when user plays a portfolio video */
+export function trackVideoPlay(videoTitle: string): void {
+  trackEvent({ action: 'video_play', category: 'portfolio', label: videoTitle });
+}
+
+/** Call when user navigates to a section */
+export function trackSectionView(sectionId: string): void {
+  trackEvent({ action: 'section_view', category: 'engagement', label: sectionId });
+}

@@ -47,8 +47,8 @@ function handleFailure(reason: string): void {
   // Report to Sentry after 2 consecutive failures (avoids noise from transient blips)
   if (consecutiveFailures >= 2) {
     try {
-      const Sentry = (window as { Sentry?: { captureMessage: (msg: string, level?: string) => void } }).Sentry;
-      Sentry?.captureMessage(`[Uptime] Health check failed: ${reason}`, 'error');
+      const Sentry = (window as { Sentry?: { captureMessage: (msg: string) => void } }).Sentry;
+      Sentry?.captureMessage(`[Uptime] Health check failed: ${reason}`, 'error' as never);
     } catch {
       // Sentry not loaded yet — silently ignore
     }
