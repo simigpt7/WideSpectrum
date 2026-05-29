@@ -48,11 +48,18 @@ export async function initErrorMonitoring(): Promise<void> {
       ],
       beforeSend(event) {
         // Strip PII from breadcrumbs
-        if (event.breadcrumbs?.values) {
-          event.breadcrumbs.values = event.breadcrumbs.values.map((b) => ({
-            ...b,
-            data: undefined,
-          }));
+        if (event.breadcrumbs) {
+          try {
+            const breadcrumbs = event.breadcrumbs;
+            if (Array.isArray(breadcrumbs)) {
+              event.breadcrumbs = breadcrumbs.map((b) => ({
+                ...b,
+                data: undefined,
+              }));
+            }
+          } catch {
+            // Ignore errors
+          }
         }
         return event;
       },
