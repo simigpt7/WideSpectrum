@@ -4,3 +4,4 @@ export * from './useMediaQuery';
 export * from './useReducedMotion';
 export * from './useRateLimit';
 export * from './useWindowSize';
+export * from './useScrollProgress';

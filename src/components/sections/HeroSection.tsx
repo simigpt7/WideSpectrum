@@ -144,7 +144,7 @@ export const HeroSection = memo(function HeroSection({ scrollTo }: HeroSectionPr
             animationFillMode: 'forwards',
           }}
         >
-          {COMPANY.stats.map(([num, label]) => (
+          {COMPANY.stats.map(({ value, label }) => (
             <div key={label} className="text-center">
               <div
                 className="text-3xl md:text-4xl font-black"
@@ -155,7 +155,7 @@ export const HeroSection = memo(function HeroSection({ scrollTo }: HeroSectionPr
                   WebkitTextFillColor: 'transparent',
                 }}
               >
-                {num}
+                {value}
               </div>
               <div className="text-xs text-teal-400/50 mt-1 tracking-widest uppercase">{label}</div>
             </div>

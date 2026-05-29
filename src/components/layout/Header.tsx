@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, forwardRef } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { WaveEQ } from '@/components/features/WaveEQ';
@@ -7,25 +7,50 @@ import type { NavItem } from '@/types';
 const NAV_ITEMS: NavItem[] = ['services', 'about', 'portfolio', 'testimonials', 'contact'];
 
 interface HeaderProps {
-  scrolled: boolean;
   scrollTo: (id: string) => void;
+  // Legacy prop kept for any direct usages — ignored when ref-controlled
+  scrolled?: boolean;
 }
 
-export function Header({ scrolled, scrollTo }: HeaderProps) {
+/**
+ * Header is forwardRef so App can pass a ref for direct DOM attribute mutation.
+ * The [data-scrolled="true"] CSS selector drives all scroll-dependent styles,
+ * meaning zero React re-renders happen on scroll (no state, no prop drilling).
+ */
+export const Header = forwardRef<HTMLDivElement, HeaderProps>(function Header({ scrollTo }, ref) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled ? 'py-3' : 'py-4'
-      }`}
-      style={{
-        background: scrolled ? 'rgba(3, 10, 14, 0.92)' : 'transparent',
-        backdropFilter: scrolled ? 'blur(24px)' : 'none',
-        WebkitBackdropFilter: scrolled ? 'blur(24px)' : 'none',
-        borderBottom: scrolled ? '1px solid rgba(31, 138, 138, 0.15)' : 'none',
-      }}
+      ref={ref}
+      className="fixed top-0 left-0 right-0 z-50 wsp-header"
+      data-scrolled="false"
     >
+      <style>{`
+        .wsp-header {
+          padding-top: 1rem;
+          padding-bottom: 1rem;
+          background: transparent;
+          border-bottom: none;
+          transition: padding 500ms ease, background 500ms ease, border-color 500ms ease;
+        }
+        .wsp-header[data-scrolled="true"] {
+          padding-top: 0.75rem;
+          padding-bottom: 0.75rem;
+          background: rgba(3, 10, 14, 0.92);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border-bottom: 1px solid rgba(31, 138, 138, 0.15);
+        }
+        .wsp-logo {
+          height: 2.5rem;
+          transition: height 300ms ease;
+        }
+        .wsp-header[data-scrolled="true"] .wsp-logo {
+          height: 2rem;
+        }
+      `}</style>
+
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         <button
           onClick={() => scrollTo('home')}
@@ -36,7 +61,7 @@ export function Header({ scrolled, scrollTo }: HeaderProps) {
           <img
             src="/logo.png"
             alt="Wide Spectrum Productions"
-            className={`transition-all duration-300 ${scrolled ? 'h-8' : 'h-10'}`}
+            className="wsp-logo"
           />
         </button>
 
@@ -54,11 +79,7 @@ export function Header({ scrolled, scrollTo }: HeaderProps) {
             </li>
           ))}
           <li>
-            <Button
-              onClick={() => scrollTo('contact')}
-              variant="primary"
-              size="sm"
-            >
+            <Button onClick={() => scrollTo('contact')} variant="primary" size="sm">
               Book a Free Consultation
             </Button>
           </li>
@@ -81,27 +102,18 @@ export function Header({ scrolled, scrollTo }: HeaderProps) {
           mobileOpen ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <div
-          className="px-6 pb-6 pt-4 flex flex-col gap-4"
-          style={{ background: 'rgba(3, 10, 14, 0.95)' }}
-        >
+        <div className="px-6 pb-6 pt-4 flex flex-col gap-4" style={{ background: 'rgba(3, 10, 14, 0.95)' }}>
           {NAV_ITEMS.map((item) => (
             <button
               key={item}
-              onClick={() => {
-                scrollTo(item);
-                setMobileOpen(false);
-              }}
+              onClick={() => { scrollTo(item); setMobileOpen(false); }}
               className="text-left text-sm font-medium uppercase tracking-widest text-teal-300/70 hover:text-teal-300 transition-colors py-2"
             >
               {item}
             </button>
           ))}
           <Button
-            onClick={() => {
-              scrollTo('contact');
-              setMobileOpen(false);
-            }}
+            onClick={() => { scrollTo('contact'); setMobileOpen(false); }}
             variant="primary"
             className="text-center"
           >
@@ -111,4 +123,4 @@ export function Header({ scrolled, scrollTo }: HeaderProps) {
       </div>
     </nav>
   );
-}
+});

@@ -218,41 +218,59 @@ body {
 }
 
 /* ── Animation Classes ──────────────────────────────────────────────────────── */
+/* GPU-promoted: transform + opacity run on the compositor thread              */
 .animate-letter-reveal {
   animation: letterReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .animate-fade-up {
   animation: fadeSlideUp 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .animate-fade-in {
   animation: fadeIn 1.2s ease both;
+  will-change: opacity;
 }
 
 .animate-glow-pulse {
   animation: glowPulse 3s ease-in-out infinite;
+  will-change: filter;
 }
 
 .animate-float {
   animation: float 6s ease-in-out infinite;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .animate-marquee {
   animation: marqueeLeft 40s linear infinite;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .animate-scale-in {
   animation: scaleIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+  transform: translateZ(0);
 }
 
 .animate-shimmer {
   animation: shimmer 2s linear infinite;
   background-size: 200% 100%;
+  will-change: background-position;
 }
 
 .animate-breathe {
   animation: breathe 4s ease-in-out infinite;
+  will-change: transform, opacity;
+  transform: translateZ(0);
 }
 
 /* ── Marquee Track ─────────────────────────────────────────────────────────── */
@@ -260,6 +278,9 @@ body {
   display: flex;
   white-space: nowrap;
   animation: marqueeLeft 40s linear infinite;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .marquee-track:hover {
@@ -295,9 +316,14 @@ body {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(31, 138, 138, 0.2);
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .glass-card::before {
@@ -791,4 +817,60 @@ a:focus-visible {
   * {
     scrollbar-color: var(--teal) var(--dark-bg);
   }
+}
+
+
+/* ── Performance: content-visibility for below-fold sections ─────────────── */
+/*
+ * content-visibility: auto tells the browser to skip rendering work for
+ * off-screen sections entirely. This is one of the highest-ROI CSS perf
+ * optimizations available. The contain-intrinsic-size gives the browser
+ * an estimate so layout doesn't jump when sections become visible.
+ */
+#services,
+#about,
+#portfolio,
+#testimonials,
+#contact {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 800px;
+}
+
+/* ── Performance: reduce paint areas ────────────────────────────────────── */
+/*
+ * contain:paint tells the browser this element's paint is self-contained —
+ * it won't overflow its bounds — so paint invalidations don't bubble up.
+ */
+.cb,
+.card,
+[class*="glassmorphism"] {
+  contain: paint;
+}
+
+/* ── Performance: avoid animating filter/opacity on large surfaces ────────── */
+/*
+ * The glow-pulse animation uses `filter: brightness()` which forces a
+ * compositor layer for every animated element. Replace with opacity animation
+ * where possible. Keep the keyframes but override the expensive variant.
+ */
+@keyframes glowPulseGPU {
+  0%, 100% { opacity: 0.7; }
+  50%       { opacity: 1; }
+}
+
+/* ── Performance: scroll-snap (optional, uncomment to enable) ─────────────── */
+/*
+html {
+  scroll-snap-type: y proximity;
+}
+section[id] {
+  scroll-snap-align: start;
+}
+*/
+
+/* ── Accessibility: consistent focus ring ────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--teal-light, #7EE7C8);
+  outline-offset: 3px;
+  border-radius: 4px;
 }

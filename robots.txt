@@ -1,5 +1,10 @@
-# https://www.robotstxt.org/robotstxt.html
+# Wide Spectrum Productions — robots.txt
 User-agent: *
 Allow: /
 
+# Block staging subdomain crawling
+User-agent: *
+Disallow: /staging/
+
+# Sitemap
 Sitemap: https://widespectrumproductions.com/sitemap.xml
