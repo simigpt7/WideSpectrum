@@ -25,10 +25,10 @@ export const HeroSection = memo(function HeroSection({ scrollTo }: HeroSectionPr
         muted
         playsInline
         className="absolute inset-0 w-full h-full object-cover"
-        style={{ opacity: 0.5, zIndex: 1 }}
-        poster="/hero-poster.jpg"
+        style={{ opacity: 0.3, zIndex: 1 }}
       >
         <source src="/hero-video.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
       </video>
 
       {/* Gradient Overlays */}
@@ -144,7 +144,7 @@ export const HeroSection = memo(function HeroSection({ scrollTo }: HeroSectionPr
             animationFillMode: 'forwards',
           }}
         >
-          {COMPANY.stats.map(({ value, label }) => (
+          {COMPANY.stats.map(([num, label]) => (
             <div key={label} className="text-center">
               <div
                 className="text-3xl md:text-4xl font-black"
@@ -155,7 +155,7 @@ export const HeroSection = memo(function HeroSection({ scrollTo }: HeroSectionPr
                   WebkitTextFillColor: 'transparent',
                 }}
               >
-                {value}
+                {num}
               </div>
               <div className="text-xs text-teal-400/50 mt-1 tracking-widest uppercase">{label}</div>
             </div>
